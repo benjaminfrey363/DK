@@ -179,6 +179,13 @@ void printf(char *str) {
 	
 	// Parent process. Game control software will go here.
 
+	// TO-DO: Display start menu
+
+	// Wait for start button to be pressed...
+	while (1) {
+		if (buttons[4 - 1] == 0) break;			// Break if start is pressed.
+	}
+
 	// Test drawing.
 	fb_init();
 	drawRect(100, 100, 300, 300, 0xe, 0);
