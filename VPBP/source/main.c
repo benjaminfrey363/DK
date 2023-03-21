@@ -18,5 +18,8 @@ void printf(char *str) {
 	printf("Hello world\n");
 
 	printf("Program is terminating\n");
-    	return 0;
+
+	printf("Test modification...\n");
+
+	return 0;
 }
