@@ -19,4 +19,5 @@ struct gamemap {
     int score;              // player score.
     int lives;              // number of lives remaining.
     int time;               // time remaining.
+
 };
