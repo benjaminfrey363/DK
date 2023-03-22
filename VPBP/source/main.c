@@ -7,6 +7,7 @@
 #include "test-art.h"
 
 #include "gamestate.c"
+#include "image.c"
 
 #define MAXOBJECTS 30
 
@@ -140,23 +141,10 @@ int buttons[16];
 // Array to track current locations of sprites on game map.
 struct coord sprite_locs[MAXOBJECTS];
 
-
-// TO-DO: Implement these methods!
-
-// Draws gamemap map with background image described by img, width, height.
-// Offsets for drawing will be 0.
-void drawMap(struct gamemap map, unsigned char * img, int width, int height) {}
-
-
-// Updates map - I think we can do this by checking object positions in the gamestate,
-// and compare these to the sprite locations in the array sprite_locs. We can then only
-// redraw those sprites whose locations have changed.
-//
-// QUESTION - how do we "undraw" a sprite in order to draw it somewhere else? Do we need to
-// redraw the whole map?
-void updateMap(struct gamestate state, unsigned char * img, int width, int height) {}
-
-
+// Method to draw an image passed as an image structure.
+void draw_image(struct image myimg, int offx, int offy) {
+    myDrawImage(myimg.img, myimg.width, myimg.height, offx, offy);
+}
 
 int main()
 {
@@ -170,9 +158,9 @@ void printf(char *str) {
 // First, set up driver... //
 /////////////////////////////
 
-// Initialize buttons array.
+// Initialize buttons array to all 1s.
 int buttons[16];
-for (int i = 0; i < 16; ++i) buttons[i] = 0;
+for (int i = 0; i < 16; ++i) buttons[i] = 1;
 
 // Initialize SNES lines and frame buffer.
 init_snes_lines();
@@ -184,6 +172,7 @@ myDrawImage(test_image.pixel_data, test_image.width, test_image.height, 100, 100
 
 // Wait for start button to be pressed...
 while (1) {
+    read_SNES(buttons);                     // Read buttons.
 	if (buttons[4 - 1] == 0) break;			// Break if start is pressed.
 }
 
