@@ -179,6 +179,6 @@ void myDrawImage(unsigned char * img, int width, int height, int offx, int offy)
         int rgba_color = img_buff[width*j + i];
         int argb_color = __builtin_bswap32(rgba_color); // match endianness by reversing lower 32 bits
         argb_color = (argb_color << 24) | (argb_color >> 8); // rgba argb
-        myDrawPixel(x,y,argb_color);
+        drawPixel(x,y,argb_color);
     }
 }
