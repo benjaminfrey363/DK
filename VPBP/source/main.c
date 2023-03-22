@@ -6,6 +6,11 @@
 #include "fb.h"
 #include "test-art.h"
 
+#include "gamemap.c"
+#include "gamestate.c"
+
+#define MAXOBJECTS 30
+
 // GPIO macros
 
 #define GPIO_BASE 0xFE200000
@@ -133,6 +138,27 @@ int read_SNES(int *array)
 // Array to track which buttons have been pressed.
 int buttons[16];
 
+// Array to track current locations of sprites on game map.
+struct coord sprite_locs[MAXOBJECTS];
+
+
+// TO-DO: Implement these methods!
+
+// Draws gamemap map with background image described by img, width, height.
+// Offsets for drawing will be 0.
+void drawMap(struct gamemap map, unsigned char * img, int width, int height) {}
+
+
+// Updates map - I think we can do this by checking object positions in the gamestate,
+// and compare these to the sprite locations in the array sprite_locs. We can then only
+// redraw those sprites whose locations have changed.
+//
+// QUESTION - how do we "undraw" a sprite in order to draw it somewhere else? Do we need to
+// redraw the whole map?
+void updateMap(struct gamestate state, unsigned char * img, int width, int height) {}
+
+
+
 int main()
 {
 
@@ -164,9 +190,14 @@ while (1) {
 
 // Start game...
 
-// Test, draw a second test image:
+/////////////////
+// FIRST STAGE //
+/////////////////
 
 myDrawImage(test_image.pixel_data, test_image.width, test_image.height, 200, 200);
+
+
+
 
 return 1;
 
