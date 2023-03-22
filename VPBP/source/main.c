@@ -141,7 +141,7 @@ int buttons[16];
 // Array to track current locations of sprites on game map.
 struct coord sprite_locs[MAXOBJECTS];
 
-// Method to draw an image passed as an image structure.
+// Method to draw an image passed as an image structure at the specified offsets.
 void draw_image(struct image myimg, int offx, int offy) {
     myDrawImage(myimg.img, myimg.width, myimg.height, offx, offy);
 }
