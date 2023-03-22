@@ -169,3 +169,16 @@ void drawString(int x, int y, char *s, unsigned char attr)
        s++;
     }
 }
+
+/* FOR GIMP EXPORTED C SOURCE FILES this method handles it: it takes a pixel and converts rgba to argb*/
+void myDrawImage(unsigned char * img, int width, int height, int offx, int offy) {
+    int * img_buff = (int *) img; // each pixel is 4 bites. So should offset by 4bytes in indexing and fetch 4 bytes in accessing value casting to (int *) would be ideal.
+    for (int i = 0; i < width; i++) for (int j = 0; j < height; j++) {
+        int x = i+offx;
+        int y = j+offy;
+        int rgba_color = img_buff[width*j + i];
+        int argb_color = __builtin_bswap32(rgba_color); // match endianness by reversing lower 32 bits
+        argb_color = (argb_color << 24) | (argb_color >> 8); // rgba argb
+        myDrawPixel(x,y,argb_color);
+    }
+}

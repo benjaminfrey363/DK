@@ -4,6 +4,7 @@
 #include "gpio.h"
 #include "uart.h"
 #include "fb.h"
+#include "test-art.h"
 
 // GPIO macros
 
@@ -140,57 +141,32 @@ void printf(char *str) {
 	uart_puts(str);
 }
 
-// FORK PROGRAM HERE.
-// Child will act as a device driver, checking and updating the
-// buttons array until the game is over. Parent will run the game.
+/////////////////////////////
+// First, set up driver... //
+/////////////////////////////
 
-	int killReader = 0;							// Flag to kill child process.
+// Initialize buttons array.
+int buttons[16];
+for (int i = 0; i < 16; ++i) buttons[i] = 0;
 
-	pid_t fr;
-	fr = fork();
-	if (fr < 0) {
-		printf("Fork failed.\n");
-		return -1;
-	} else if (fr == 0) {
-		// Child process. Continually update buttons array by reading pins.
+// Initialize SNES lines and frame buffer.
+init_snes_lines();
+fb_init();
 
-		// Initialize buttons array.
-		int buttons[16];
-		for (int i = 0; i < 16; ++i) {
-		buttons[i] = 0;
+// TO-DO: Display start menu (for now test image)
 
-		// Initialize SNES lines.
-		init_snes_lines();
+myDrawImage(test_image.pixel_data, test_image.width, test_image.height, 100, 100);
 
-		// Now, this process will just continually read SNES lines and update buttons
-		// array accordingly. I don't think we need to add delays or wait for buttons
-		// to be "unpressed" here (as was the case in our driver).
-		// This loop will guarantee that at any given moment, the buttons array correctly
-		// represents which buttons on the controller are being pressed.
+// Wait for start button to be pressed...
+while (1) {
+	if (buttons[4 - 1] == 0) break;			// Break if start is pressed.
+}
 
-		while (!killReader) {
-			read_SNES(buttons);
-		}
+// Start game...
 
-		return 1;		// Kill process.
-	}
 
-	} else {
-	
-	// Parent process. Game control software will go here.
 
-	// TO-DO: Display start menu
+return 1;
 
-	// Wait for start button to be pressed...
-	while (1) {
-		if (buttons[4 - 1] == 0) break;			// Break if start is pressed.
-	}
 
-	// Test drawing.
-	fb_init();
-	drawRect(100, 100, 300, 300, 0xe, 0);
-
-	return 1;
-
-	}
 }
