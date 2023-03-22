@@ -24,6 +24,6 @@ struct gamestate {
     struct coord positions[MAXOBJECTS];
 
     // Flags.
-    int winflag = 0;
-    int loseflag = 0;
+    int winflag;
+    int loseflag;
 };

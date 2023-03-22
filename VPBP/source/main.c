@@ -6,7 +6,6 @@
 #include "fb.h"
 #include "test-art.h"
 
-#include "gamemap.c"
 #include "gamestate.c"
 
 #define MAXOBJECTS 30
