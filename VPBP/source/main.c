@@ -164,7 +164,9 @@ while (1) {
 
 // Start game...
 
+// Test, draw a second test image:
 
+myDrawImage(test_image.pixel_data, test_image.width, test_image.height, 200, 200);
 
 return 1;
 
