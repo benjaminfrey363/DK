@@ -153,8 +153,5 @@ int checkCollision(int direction, struct gamestate state)
             }
         }
     }
-    else
-    {
-        return 0;
-    }
+    return 0;
 }
