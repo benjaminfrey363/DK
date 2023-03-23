@@ -4,10 +4,15 @@
 #include "gpio.h"
 #include "uart.h"
 #include "fb.h"
+
+// Image structures
+
 #include "test-art.h"
+#include "dk_image.c"
 
 #include "gamestate.c"
 #include "image.c"
+
 
 #define MAXOBJECTS 30
 
@@ -141,7 +146,7 @@ int buttons[16];
 // Array to track current locations of sprites on game map.
 struct coord sprite_locs[MAXOBJECTS];
 
-// Method to draw an image passed as an image structure at the specified offsets.
+// Method to draw an image passed as an image structure at the specified coordinate.
 void draw_image(struct image myimg, int offx, int offy) {
     myDrawImage(myimg.img, myimg.width, myimg.height, offx, offy);
 }
@@ -176,16 +181,65 @@ while (1) {
 	if (buttons[4 - 1] == 0) break;			// Break if start is pressed.
 }
 
-// Start game...
-
 /////////////////
 // FIRST STAGE //
 /////////////////
 
-myDrawImage(test_image.pixel_data, test_image.width, test_image.height, 200, 200);
+// First initialize all structures we'll be using.
 
+// Create dk structure.
 
+struct DonkeyKong my_dk;
+my_dk.sprite = dk_image;
+my_dk.speed = 1;
+my_dk.collision = 0;
 
+// Create map1 structure.
+
+struct gamemap map1;
+map1.width = 20;
+map1.height = 20;
+map1.score = 0;
+map1.lives = 4;
+map1.time = 1000;
+
+// Greate gamestate structure (THIS SAME STRUCTURE WILL BE USED THROUGHOUT
+// THE ENTIRE PROGRAM)
+
+struct gamestate state;
+state.map = map1;
+state.positions = struct coord locs[MAXOBJECTS];
+// Initialize all positions to zero (for now)
+for (int i = 0; i < MAXOBJECTS; ++i) {
+    state.positions[i].x = 0;
+    state.positions[i].y = 0;
+}
+state.num_objects = 1;                  // For now, only object is DK.
+state.winflag = 0;
+state.loseflag = 0;
+state.dk = my_dk;
+
+// To test, print DK and use controller to move him around without erasing old prints.
+// Should be like the snake game.
+
+// Initialize location of DK. CURRENTLY THESE ARE PIXEL COORDS - SHOULD BE GRID COORDS
+state.positions[0].x = 100;
+state.positions[0].y = 100;
+
+while (1) {
+    // Currently we're passing grid coords into draw_image, should be pixel coords.
+    // TO-DO: edit draw_image so that it does take grid coords as arguments, but then converts
+    // then to pixel coords before calling myDrawImage.
+
+    // Read controller.
+    read_SNES(buttons);
+    // Move DK accordingly.
+    DKmove(buttons, state);
+    // Draw DK.
+    draw_image(state.dk.sprite, state.positions[0].x, state.positions[0].y);
+    // Break on start being pressed.
+    if (buttons[4 - 1] == 0) break;
+}
 
 return 1;
 

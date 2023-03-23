@@ -25,6 +25,7 @@ struct gamestate
     // in our game state. These are controlled externally, but
     // DKs position will always be the first entry.
     struct coord positions[MAXOBJECTS];
+    int num_objects;        // Actual # of objects in world.
 
     // Flags.
     int winflag;
