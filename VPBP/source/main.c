@@ -11,7 +11,7 @@
 #include "dk_image.c"
 
 #include "gamestate.c"
-#include "image.c"
+// #include "image.c"
 
 
 #define MAXOBJECTS 30
@@ -153,7 +153,7 @@ struct coord sprite_locs[MAXOBJECTS];
 // Conversion is:
 // pixel_off = grid_off * (num_pixels (1280 or 720) / size_of_grid (map.width or .height))
 // Can integer divide - this doesn't need to be crazy precise to mimic smooth movement.
-void draw_image(struct image myimg, gamemap map, int offx, int offy) {
+void draw_image(struct image myimg, struct gamemap map, int offx, int offy) {
     offx = offx * (1280 / map.width);
     offy = offy * (720 / map.height);
     myDrawImage(myimg.img, myimg.width, myimg.height, offx, offy);
@@ -195,10 +195,12 @@ while (1) {
 
 // First initialize all structures we'll be using.
 
-// Create dk structure.
+// Create dk structure using image dk_image.
 
 struct DonkeyKong my_dk;
-my_dk.sprite = dk_image;
+my_dk.sprite.img = dk_image.pixel_data;
+my_dk.sprite.width = dk_image.width;
+my_dk.sprite.height = dk_image.height;
 my_dk.speed = 1;
 my_dk.collision = 0;
 
@@ -216,7 +218,8 @@ map1.time = 1000;
 
 struct gamestate state;
 state.map = map1;
-state.positions = struct coord locs[MAXOBJECTS];
+struct coord locs[MAXOBJECTS];
+state.positions = locs;
 // Initialize all positions to zero (for now)
 for (int i = 0; i < MAXOBJECTS; ++i) {
     state.positions[i].x = 0;
