@@ -46,8 +46,26 @@ struct DonkeyKong DK;
  * converting the input to an integer. A directional input will check to ensure that DK
  * will still be on the screen and will not collide hit with an object.
  */
-void DKmove(int direction)
+void DKmove(int *buttons)
 {
+    int direction;
+    if (buttons[4] == 0)
+    {
+        direction = 3;
+    }
+    else if (buttons[5] == 0)
+    {
+        direction = 4;
+    }
+    else if (buttons[7] == 0)
+    {
+        direction = 1;
+    }
+    else if (buttons[6] == 0)
+    {
+        direction = 2;
+    }
+
     if (direction == 1)
     {                                           // Right
         if (gamestate.positions[0].x + 1 <= 22) // Ensure that DK does not step outside of screen
