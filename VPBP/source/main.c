@@ -11,6 +11,7 @@
 #include "dk_image.c"
 
 #include "gamestate.c"
+#include "movement.c"
 // #include "image.c"
 
 
