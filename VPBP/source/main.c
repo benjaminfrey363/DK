@@ -218,8 +218,6 @@ map1.time = 1000;
 
 struct gamestate state;
 state.map = map1;
-struct coord locs[MAXOBJECTS];
-state.positions = locs;
 // Initialize all positions to zero (for now)
 for (int i = 0; i < MAXOBJECTS; ++i) {
     state.positions[i].x = 0;
