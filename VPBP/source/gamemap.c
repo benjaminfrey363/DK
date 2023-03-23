@@ -9,15 +9,26 @@
 // score, lives remaining, and remaining time will be updated by
 // the game logic as the game progresses (so these are controlled
 // externally).
-// 
+//
 // a game map DOES NOT track DK or other objects in the game. These
 // will be tracked in the gamestate structure.
 
-struct gamemap {
-    int width;              // must be at least 20.
-    int height;             // must be at least 20.
-    int score;              // player score.
-    int lives;              // number of lives remaining.
-    int time;               // time remaining.
+struct gamemap
+{
+    int width;  // must be at least 20.
+    int height; // must be at least 20.
+    int score;  // player score.
+    int lives;  // number of lives remaining.
+    int time;   // time remaining.
 
+    struct gamemap1;
+    struct gamemap2;
+    struct gamemap3;
+    struct gamemap4;
+};
+
+struct gamemap1
+{
+    int horizontalTiles[];
+    int verticalTiles[];
 };
