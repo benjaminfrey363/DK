@@ -103,7 +103,7 @@ int checkCollision(int direction, struct gamestate state)
 {
     if (direction == 1)
     { // DK moving right
-        for (int i = 1; i < sizeof(state.positions); i++)
+        for (int i = 1; i < state.num_objects; i++)
         { // Iterate through list of all positions, find if any x values match;
             if (state.positions[0].x + 1 == state.positions[i].x)
             { // If DK's X value is the same as another x value,
@@ -116,7 +116,7 @@ int checkCollision(int direction, struct gamestate state)
     }
     else if (direction == 2)
     { // DK moving left
-        for (int i = 1; i < sizeof(state.positions); i++)
+        for (int i = 1; i < state.num_objects; i++)
         { // Iterate through list of all positions, find if any x values match;
             if (state.positions[0].x - 1 == state.positions[i].x)
             { // If DK's X value is the same as another x value,
@@ -129,7 +129,7 @@ int checkCollision(int direction, struct gamestate state)
     }
     else if (direction == 3)
     { // DK moving up
-        for (int i = 1; i < sizeof(state.positions); i++)
+        for (int i = 1; i < state.num_objects; i++)
         { // Iterate through list of all positions, find if any x values match;
             if (state.positions[0].x == state.positions[i].x)
             { // If DK's X value is the same as another x value,
@@ -142,7 +142,7 @@ int checkCollision(int direction, struct gamestate state)
     }
     else if (direction == 4)
     { // DK moving down
-        for (int i = 1; i < sizeof(state.positions); i++)
+        for (int i = 1; i < state.num_objects; i++)
         { // Iterate through list of all positions, find if any x values match;
             if (state.positions[0].x == state.positions[i].x)
             { // If DK's X value is the same as another x value,
