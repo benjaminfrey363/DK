@@ -10,7 +10,7 @@
 #include "test-art.h"
 #include "dk_image.c"
 
-#include "gamestate.c"
+// #include "gamestate.c"
 #include "movement.c"
 // #include "image.c"
 
@@ -242,7 +242,25 @@ while (1) {
     // Read controller.
     read_SNES(buttons);
     // Move DK accordingly.
-    DKmove(buttons, state);
+    // DKmove(buttons, state);              // DKMove not working - for now manually update position.
+
+    if (buttons[4] == 0) {
+        // Pressing up
+        ++state.positions[0].y;
+    }
+    if (buttons[5] == 0) {
+        // Pressing down
+        --state.positions[0].y;
+    }
+    if (buttons[6] == 0) {
+        // Pressing left
+        --state.positions[0].x;
+    }
+    if (buttons[7] == 0) {
+        // Pressing right
+        ++state.positions[0].x;
+    }
+
     // Draw DK.
     draw_image(state.dk.sprite, state.map, state.positions[0].x, state.positions[0].y);
     // Break on start being pressed.
