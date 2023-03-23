@@ -1,5 +1,4 @@
 #include "gamemap.c"
-#include "image.c"
 #include "dk.c"
 #define MAXOBJECTS 30 // Maximum number of objects.
 
