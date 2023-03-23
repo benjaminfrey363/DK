@@ -147,7 +147,15 @@ int buttons[16];
 struct coord sprite_locs[MAXOBJECTS];
 
 // Method to draw an image passed as an image structure at the specified coordinate.
-void draw_image(struct image myimg, int offx, int offy) {
+// Offsets are passed as grid coordinates, so must be converted to pixel coordinates before drawing.
+//
+// so 0 \leq offx \leq state.width, 0 \leq offy \leq state.height.
+// Conversion is:
+// pixel_off = grid_off * (num_pixels (1280 or 720) / size_of_grid (map.width or .height))
+// Can integer divide - this doesn't need to be crazy precise to mimic smooth movement.
+void draw_image(struct image myimg, gamemap map, int offx, int offy) {
+    offx = offx * (1280 / map.width);
+    offy = offy * (720 / map.height);
     myDrawImage(myimg.img, myimg.width, myimg.height, offx, offy);
 }
 
@@ -226,20 +234,33 @@ state.dk = my_dk;
 state.positions[0].x = 100;
 state.positions[0].y = 100;
 
+// this loop will run while we're in the first stage - break if DK exits stage (moves off the screen?)
 while (1) {
-    // Currently we're passing grid coords into draw_image, should be pixel coords.
-    // TO-DO: edit draw_image so that it does take grid coords as arguments, but then converts
-    // then to pixel coords before calling myDrawImage.
-
+    // draw_image takes grid coords - NOT pixel coords. Converts automatically.
     // Read controller.
     read_SNES(buttons);
     // Move DK accordingly.
     DKmove(buttons, state);
     // Draw DK.
-    draw_image(state.dk.sprite, state.positions[0].x, state.positions[0].y);
+    draw_image(state.dk.sprite, state.map, state.positions[0].x, state.positions[0].y);
     // Break on start being pressed.
     if (buttons[4 - 1] == 0) break;
 }
+
+
+//////////////////
+// SECOND STAGE //
+//////////////////
+
+// Create map2 structure - reset lives and time (?) and maintain score.
+
+struct gamemap map2;
+map2.width = 20;
+map2.height = 20;
+map2.score = map1.score;
+map2.lives = 4;
+map2.time = 1000;
+
 
 return 1;
 
