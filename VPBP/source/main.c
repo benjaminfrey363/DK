@@ -353,27 +353,23 @@ void move_horz(int *btns, int *offx) {
 
 
 // Gets sprite to jump, prints this to the screen.
-void jump(unsigned char *pixel_data, int width, int height, int *offx, int *offy, int *btns) {
-    // See how far DK is from vertical starting point by comparing to initial_y.
-    // DKs distance from his vertical starting point is initial_y - *offy
-    // Max distance is 100 - use (100 - distance) as an acceleration factor.
-    int initial_y = *offy;
+void jump(struct object jumper, int *btns) {
     for (int i = 0; i <= JUMPHEIGHT; ++i) {
         // Print sprite at location (offx, offy - i).
         // Check to see if left or right is pressed and update offx accordingly.
         read_SNES(buttons);
-        move_horz(buttons, offx);
-        --*(offy);          // Decrement *offy each iteration. Decrement by LESS AS DISTANCE INCREASES.
-        myDrawImage(pixel_data, width, height, *offx, *offy);
+        move_horz(buttons, &(jumper.loc.x));
+        --jumper.loc.y;          // Decrement offy each iteration.
+        draw_image(jumper.sprite, jumper.loc.x, jumper.loc.y);
     }
     // Get sprite to fall back down...
     for (int i = JUMPHEIGHT; i >= 0; --i) {
         // Print sprite at location (offx, offy - i)
         // Check to see if left or right is pressed and update offx accordingly.
         read_SNES(buttons);
-        move_horz(buttons, offx);      
-        ++(*offy);          // Increment *offy each iteration. INCREMENT BY MORE AS DISTANCE DECREASES.
-        myDrawImage(pixel_data, width, height, *offx, *offy);
+        move_horz(buttons, &(jumper.loc.x));      
+        ++jumper.loc.y;          // Increment *offy each iteration.
+        draw_image(jumper.sprite, jumper.loc.x, jumper.loc.y);
     }
 }
 
@@ -413,28 +409,58 @@ while (1) {
 	if (buttons[4 - 1] == 0) break;			// Break if start is pressed.
 }
 
-// Initialize position of dk in pixel coords. DK starts in the bottom left hand corner of the screen.
-int dkx = 50;
-int dky = 900;
+/////////////////
+// FIRST STAGE //
+/////////////////
+
+// Set up game state...
+
+struct gamestate state;
+
+state.score = 0;
+state.lives = 4;
+state.time = 1000;
+
+// Background image for stage 1...
+
+struct image back1;
+// Test - use DK image as background.
+back1.img = dk_image.pixel_data;
+back1.width = dk_image.width;
+back1.height = dk_image.height;
+state.background = back1;
+
+// Objects for stage 1... for now just DK.
+
+state.objects[0].sprite.img = dk_image.pixel_data;
+state.objects[0].sprite.width = dk_image.width;
+state.objects[0].sprite.height = dk_image.height;
+
+state.objects[0].collision = 0;
+
+// DK starting location
+state.objects[0].loc.x = 50;
+state.objects[0].loc.y = 900;
+
+struct object dk = state.objects[0];
 
 // this loop will run while we're in the first stage - break if DK exits stage (moves off the screen?)
-// TEST - DK can move left or right, not up or down.
 while (1) {
 
     // Read controller.
     read_SNES(buttons);
 
     // Move DK accordingly.
-    move_horz(buttons, &dkx);
+    move_horz(buttons, &dk.loc.x);
 
     // Jump with the B button (button code 1)
     if (buttons[0] == 0) {
         // Jump!
-        jump(dk_image.pixel_data, dk_image.width, dk_image.height, &dkx, &dky, buttons);
+        jump(dk, buttons);
     }
 
-    // Draw DK.
-    myDrawImage(dk_image.pixel_data, dk_image.width, dk_image.height, dkx, dky);
+    // Draw gamestate.
+    draw_gamestate(state);
 }
 
 return 1;
