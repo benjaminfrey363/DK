@@ -357,7 +357,7 @@ void jump(unsigned char *pixel_data, int width, int height, int *offx, int *offy
         read_SNES(buttons);
         move_horz(buttons, offx);      
         ++(*offy);          // Increment *offy each iteration.
-        myDrawImage(pixel_data, width, height, offx, offy - i);
+        myDrawImage(pixel_data, width, height, *offx, *offy);
     }
 }
 
