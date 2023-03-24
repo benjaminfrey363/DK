@@ -14,6 +14,8 @@
 
 
 #define MAXOBJECTS 30
+#define SCREENWIDTH 1280
+#define JUMPHEIGHT 150
 
 // GPIO macros
 
@@ -323,6 +325,20 @@ int checkCollision(int direction, struct gamestate state)
 }
 
 
+// Gets sprite to jump, prints this to the screen.
+void jump(unsigned char *pixel_data, int width, int height, int offx, int offy) {
+    for (int i = 0; i <= JUMPHEIGHT; ++i) {
+        // Print sprite at location (offx, offy - i)
+        myDrawImage(pixel_data, width, height, offx, offy - i);
+    }
+    // Get sprite to fall back down...
+    for (int i = JUMPHEIGHT; i >= 0; --i) {
+        // Print sprite at location (offx, offy - i)
+        myDrawImage(pixel_data, width, height, offx, offy - i);
+    }
+}
+
+
 
 //////////
 // MAIN //
@@ -368,7 +384,7 @@ while (1) {
 
     // Read controller.
     read_SNES(buttons);
-    
+
     // Move DK accordingly.
 
     if (buttons[6] == 0) {
@@ -377,7 +393,12 @@ while (1) {
     }
     if (buttons[7] == 0) {
         // Pressing right
-        if (dkx < 1280) ++dkx;
+        if (dkx < SCREENWIDTH) ++dkx;
+    }
+
+    if (buttons[4] == 0) {
+        // Jump!
+        jump(test_image.pixel_data, test_image.width, test_image.height, dkx, dky);
     }
 
     // Draw DK.
