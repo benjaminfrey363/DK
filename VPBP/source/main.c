@@ -198,13 +198,7 @@ struct gamestate
 // DRAWING FUNCTIONS //
 ///////////////////////
 
-// Method to draw an image passed as an image structure at the specified coordinate.
-// Offsets are passed as grid coordinates, so must be converted to pixel coordinates before drawing.
-//
-// so 0 \leq offx \leq state.width, 0 \leq offy \leq state.height.
-// Conversion is:
-// pixel_off = grid_off * (num_pixels (1280 or 720) / size_of_grid (map.width or .height))
-// Can integer divide - this doesn't need to be crazy precise to mimic smooth movement.
+// Draws an image structure at specified pixel offsets.
 void draw_image(struct image myimg, int offx, int offy) {
     myDrawImage(myimg.img, myimg.width, myimg.height, offx, offy);
 }
@@ -221,6 +215,7 @@ void draw_gamestate(struct gamestate state) {
     }
 
     // TO-DO: ADD IN PRINTING LIVES, SCORE, TIME LEFT.
+
 }
 
 
@@ -513,8 +508,13 @@ while (1) {
         jump(dk, buttons);
     }
 
+    /*
     // Draw gamestate.
     draw_gamestate(state);
+    */
+    // Bypass - draw DK
+    draw_image(dk.sprite, dk.loc.x,dk.loc.y);
+
 }
 
 return 1;
