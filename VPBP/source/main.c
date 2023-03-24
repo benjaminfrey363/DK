@@ -419,6 +419,21 @@ void jump(struct object *jumper_ptr, int *btns) {
 }
 
 
+// Randomly moves the passed object horizontally.
+// To simulate randomness, takes an int argument (will be time once that's figured out).
+void move_rand(struct object *ob_ptr, int time) {
+    if (time % 3 == 0) {
+        // Do not move.
+    } else if (time % 3 == 1) {
+        // Move left.
+        (*ob_ptr).loc.x -= 1;
+    } else {
+        // Move right.
+        (*ob_ptr).loc.x += 1;
+    }
+    return
+}
+
 
 //////////
 // MAIN //
@@ -496,7 +511,7 @@ state.objects[1].sprite.height = enemy_image.height;
 state.objects[1].collision = 0;
 
 state.objects[1].loc.x = 1000;
-state.objects[0].loc.y = 900;
+state.objects[1].loc.y = 900;
 
 
 // this loop will run while we're in the first stage - break if DK exits stage (moves off the screen?)
@@ -514,8 +529,11 @@ while (1) {
         jump(state.objects, buttons);
     }
 
-    // Draw gamestate - not working, makefile error. Asked TA, temporarily replacing with body of draw_state.
-    // draw_state(state);
+    // Move enemies randomly - for now one enemy, done manually:
+    move_rand(&state.objects[1], 1);
+
+// Draw gamestate - not working, makefile error. Asked TA, temporarily replacing with body of draw_state.
+// draw_state(state);
     
     // draw_state:
     
