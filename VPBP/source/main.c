@@ -182,12 +182,15 @@ void draw_gamestate(struct gamestate state) {
 // MOVEMENT FUNCTIONS //
 ////////////////////////
 
+
 /*
  * This method will be called in response to a directional input from the SNES controller.
  * int direction () can be changed to be the direct output from the controller instead of
  * converting the input to an integer. A directional input will check to ensure that DK
  * will still be on the screen and will not collide hit with an object.
  */
+
+/*
 void DKmove(int *buttons, struct gamestate state)
 {
     int direction;
@@ -272,6 +275,7 @@ void DKmove(int *buttons, struct gamestate state)
         }
     }
 }
+*/
 
 
 /*
@@ -279,6 +283,7 @@ void DKmove(int *buttons, struct gamestate state)
  * if DK's next step in the given direction would result in a collision with
  * any object. Returning a 1 will indicate that DK will collide with an object.
  */
+ /*
 int checkCollision(int direction, struct gamestate state)
 {
     if (direction == 1)
@@ -335,6 +340,7 @@ int checkCollision(int direction, struct gamestate state)
     }
     return 0;
 }
+*/
 
 
 // Controls horizontal movement. Updates object offsets according to which buttons are pressed.
