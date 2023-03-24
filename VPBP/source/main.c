@@ -159,10 +159,22 @@ struct coord sprite_locs[MAXOBJECTS];
 // Conversion is:
 // pixel_off = grid_off * (num_pixels (1280 or 720) / size_of_grid (map.width or .height))
 // Can integer divide - this doesn't need to be crazy precise to mimic smooth movement.
-void draw_image(struct image myimg, struct gamemap map, int offx, int offy) {
-    offx = offx * (1280 / map.width);
-    offy = offy * (720 / map.height);
+void draw_image(struct image myimg, int offx, int offy) {
     myDrawImage(myimg.img, myimg.width, myimg.height, offx, offy);
+}
+
+
+// Main drawing method - draws a game state.
+void draw_gamestate(struct gamestate state) {
+    // First, draw background at the origin...
+    draw_image(state.background, 0, 0);
+    // Draw each object...
+    for (int i = 0; i < state.num_objects; ++i) {
+        // Print state.objects[i]
+        draw_image(state.objects[i].sprite, state.objects[i].loc.x, state.objects[i].loc.y);
+    }
+
+    // TO-DO: ADD IN PRINTING LIVES, SCORE, TIME LEFT.
 }
 
 
