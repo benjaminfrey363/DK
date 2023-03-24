@@ -9,10 +9,6 @@
 #include "test-art.h"
 #include "dk_image.h"
 
-// structures which will be used included in separate file.
-#include "structures.c"
-
-
 #define MAXOBJECTS 30
 #define SCREENWIDTH 1888
 #define JUMPHEIGHT 100
@@ -141,11 +137,61 @@ int read_SNES(int *array)
 // END OF DYLANS CODE //
 ////////////////////////
 
-// Array to track which buttons have been pressed.
+// Array to track which buttons have been pressed;
 int buttons[16];
 
-// Array to track current locations of sprites on game map.
-struct coord sprite_locs[MAXOBJECTS];
+////////////////
+// STRUCTURES //
+////////////////
+
+// Defines structure of a printable image.
+//
+// An image tracks an unsigned character array, a width, and a height.
+struct image {
+    unsigned char *img;
+    int width;
+    int height;
+};
+
+
+// Structure to track object coordinates.
+struct coord
+{
+    int x; // Horz coordinate
+    int y; // Vert coordinate
+};
+
+
+// Defines object structure.
+//
+// An instance of object contains a sprite, a flag indicating collision
+// with another object (not used yet), and a coordinate.
+struct object
+{
+    struct image sprite;        // sprite.
+    int collision;              // collision flag.
+    struct coord loc;           // Coordinate location.
+};
+
+
+// Gamestate structure
+struct gamestate
+{
+    int score;
+    int lives;
+    int time;
+
+    // Also track background image...
+    struct image background;
+
+    // Tracks an array of objects.
+    struct object objects[MAXOBJECTS];
+    int num_objects;        // Actual # of objects in world.
+
+    // Flags.
+    int winflag;
+    int loseflag;
+};
 
 
 ///////////////////////
@@ -447,6 +493,8 @@ state.objects[0].collision = 0;
 // DK starting location
 state.objects[0].loc.x = 50;
 state.objects[0].loc.y = 900;
+
+state.num_objects = 1;
 
 struct object dk = state.objects[0];
 
