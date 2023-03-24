@@ -469,9 +469,9 @@ state.time = 1000;
 
 // Background image for stage 1...
 
-state.background.img = bg_image.pixel_data;
-state.background.width = bg_image.width;
-state.background.height = bg_image.height;
+state.background.img = green_image.pixel_data;
+state.background.width = green_image.width;
+state.background.height = green_image.height;
 
 // Objects for stage 1... for now just DK.
 
