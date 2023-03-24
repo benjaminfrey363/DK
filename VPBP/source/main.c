@@ -14,8 +14,8 @@
 
 
 #define MAXOBJECTS 30
-#define SCREENWIDTH 1280
-#define JUMPHEIGHT 150
+#define SCREENWIDTH 1888
+#define JUMPHEIGHT 100
 
 // GPIO macros
 
@@ -342,12 +342,16 @@ void move_horz(int *btns, int *offx) {
 
 // Gets sprite to jump, prints this to the screen.
 void jump(unsigned char *pixel_data, int width, int height, int *offx, int *offy, int *btns) {
+    // See how far DK is from vertical starting point by comparing to initial_y.
+    // DKs distance from his vertical starting point is initial_y - *offy
+    // Max distance is 100 - use (100 - distance) as an acceleration factor.
+    int initial_y = *offy;
     for (int i = 0; i <= JUMPHEIGHT; ++i) {
         // Print sprite at location (offx, offy - i).
         // Check to see if left or right is pressed and update offx accordingly.
         read_SNES(buttons);
         move_horz(buttons, offx);
-        --(*offy);          // Decrement *offy each iteration.
+        --*(offy);          // Decrement *offy each iteration. Decrement by LESS AS DISTANCE INCREASES.
         myDrawImage(pixel_data, width, height, *offx, *offy);
     }
     // Get sprite to fall back down...
@@ -356,7 +360,7 @@ void jump(unsigned char *pixel_data, int width, int height, int *offx, int *offy
         // Check to see if left or right is pressed and update offx accordingly.
         read_SNES(buttons);
         move_horz(buttons, offx);      
-        ++(*offy);          // Increment *offy each iteration.
+        ++(*offy);          // Increment *offy each iteration. INCREMENT BY MORE AS DISTANCE DECREASES.
         myDrawImage(pixel_data, width, height, *offx, *offy);
     }
 }
@@ -389,7 +393,7 @@ fb_init();
 
 // TO-DO: Display start menu (for now test image in top left corner)
 
-myDrawImage(dk_image.pixel_data, test_image.width, test_image.height, 100, 100);
+myDrawImage(dk_image.pixel_data, dk_image.width, dk_image.height, 100, 100);
 
 // Wait for start button to be pressed...
 while (1) {
@@ -399,7 +403,7 @@ while (1) {
 
 // Initialize position of dk in pixel coords. DK starts in the bottom left hand corner of the screen.
 int dkx = 50;
-int dky = 700;
+int dky = 900;
 
 // this loop will run while we're in the first stage - break if DK exits stage (moves off the screen?)
 // TEST - DK can move left or right, not up or down.
@@ -411,7 +415,8 @@ while (1) {
     // Move DK accordingly.
     move_horz(buttons, &dkx);
 
-    if (buttons[4] == 0) {
+    // Jump with the B button (button code 1)
+    if (buttons[0] == 0) {
         // Jump!
         jump(dk_image.pixel_data, dk_image.width, dk_image.height, &dkx, &dky, buttons);
     }
