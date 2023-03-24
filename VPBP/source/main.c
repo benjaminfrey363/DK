@@ -389,7 +389,7 @@ fb_init();
 
 // TO-DO: Display start menu (for now test image in top left corner)
 
-myDrawImage(test_image.pixel_data, test_image.width, test_image.height, 100, 100);
+myDrawImage(dk_image.pixel_data, test_image.width, test_image.height, 100, 100);
 
 // Wait for start button to be pressed...
 while (1) {
@@ -413,11 +413,11 @@ while (1) {
 
     if (buttons[4] == 0) {
         // Jump!
-        jump(test_image.pixel_data, test_image.width, test_image.height, &dkx, &dky, buttons);
+        jump(dk_image.pixel_data, dk_image.width, dk_image.height, &dkx, &dky, buttons);
     }
 
     // Draw DK.
-    myDrawImage(test_image.pixel_data, test_image.width, test_image.height, dkx, dky);
+    myDrawImage(dk_image.pixel_data, dk_image.width, dk_image.height, dkx, dky);
 }
 
 return 1;
