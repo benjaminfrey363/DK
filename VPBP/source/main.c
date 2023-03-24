@@ -423,15 +423,12 @@ void jump(struct object *jumper_ptr, int *btns) {
 // To simulate randomness, takes an int argument (will be time once that's figured out).
 void move_rand(struct object *ob_ptr, int time) {
     if (time % 3 == 0) {
-        // Do not move.
+        // Move right.
+        (*ob_ptr).loc.x += 1;
     } else if (time % 3 == 1) {
         // Move left.
         (*ob_ptr).loc.x -= 1;
-    } else {
-        // Move right.
-        (*ob_ptr).loc.x += 1;
     }
-    return
 }
 
 
