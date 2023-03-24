@@ -348,7 +348,7 @@ for (int i = 0; i < 16; ++i) buttons[i] = 1;
 init_snes_lines();
 fb_init();
 
-// TO-DO: Display start menu (for now test image)
+// TO-DO: Display start menu (for now test image in top left corner)
 
 myDrawImage(test_image.pixel_data, test_image.width, test_image.height, 100, 100);
 
@@ -358,50 +358,11 @@ while (1) {
 	if (buttons[4 - 1] == 0) break;			// Break if start is pressed.
 }
 
-/////////////////
-// FIRST STAGE //
-/////////////////
-
-// First initialize all structures we'll be using.
-
-// Create dk structure using image dk_image.
-
-struct DonkeyKong my_dk;
-my_dk.sprite.img = dk_image.pixel_data;
-my_dk.sprite.width = dk_image.width / 10;
-my_dk.sprite.height = dk_image.height / 10;
-my_dk.speed = 1;
-my_dk.collision = 0;
-
-// Create map1 structure.
-
-struct gamemap map1;
-map1.width = 20;
-map1.height = 20;
-map1.score = 0;
-map1.lives = 4;
-map1.time = 1000;
-
-// Greate gamestate structure (THIS SAME STRUCTURE WILL BE USED THROUGHOUT
-// THE ENTIRE PROGRAM)
-
-struct gamestate state;
-state.map = map1;
-// Initialize all positions to zero (for now)
-for (int i = 0; i < MAXOBJECTS; ++i) {
-    state.positions[i].x = 0;
-    state.positions[i].y = 0;
-}
-state.num_objects = 1;                  // For now, only object is DK.
-state.winflag = 0;
-state.loseflag = 0;
-state.dk = my_dk;
-
 // Initialize position of dk in pixel coords. Temporarily using separate variables.
 int dkx = 500;
 int dky = 300;
 
-myDrawImage(dk_image.pixel_data, dk_image.width, dk_image.height, dkx, dky);
+myDrawImage(test_image.pixel_data, test_image.width, test_image.height, dkx, dky);
 
 // this loop will run while we're in the first stage - break if DK exits stage (moves off the screen?)
 while (1) {
@@ -427,23 +388,8 @@ while (1) {
     }
 
     // Draw DK.
-    myDrawImage(dk_image.pixel_data, dk_image.width, dk_image.height, dkx, dky);
+    myDrawImage(test_image.pixel_data, test_image.width, test_image.height, dkx, dky);
 }
-
-
-//////////////////
-// SECOND STAGE //
-//////////////////
-
-// Create map2 structure - reset lives and time (?) and maintain score.
-
-struct gamemap map2;
-map2.width = 20;
-map2.height = 20;
-map2.score = map1.score;
-map2.lives = 4;
-map2.time = 1000;
-
 
 return 1;
 
