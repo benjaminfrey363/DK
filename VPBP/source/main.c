@@ -397,42 +397,37 @@ state.winflag = 0;
 state.loseflag = 0;
 state.dk = my_dk;
 
-// To test, print DK and use controller to move him around without erasing old prints.
-// Should be like the snake game.
+// Initialize position of dk in pixel coords. Temporarily using separate variables.
+int dkx = 500;
+int dky = 300;
 
-// Initialize location of DK. CURRENTLY THESE ARE PIXEL COORDS - SHOULD BE GRID COORDS
-state.positions[0].x = 100;
-state.positions[0].y = 100;
+myDrawImage(dk_image.pixel_data, dk_image.width, dk_image.height, dkx, dky);
 
 // this loop will run while we're in the first stage - break if DK exits stage (moves off the screen?)
 while (1) {
-    // draw_image takes grid coords - NOT pixel coords. Converts automatically.
     // Read controller.
     read_SNES(buttons);
     // Move DK accordingly.
-    // DKmove(buttons, state);              // DKMove not working - for now manually update position.
 
     if (buttons[4] == 0) {
         // Pressing up
-        ++state.positions[0].y;
+        if (dky > 0) --dky; 
     }
     if (buttons[5] == 0) {
         // Pressing down
-        --state.positions[0].y;
+        if (dky < 720) ++dky;
     }
     if (buttons[6] == 0) {
         // Pressing left
-        --state.positions[0].x;
+        if (dkx > 0) --dkx;
     }
     if (buttons[7] == 0) {
         // Pressing right
-        ++state.positions[0].x;
+        if (dkx < 1280) ++dkx
     }
 
     // Draw DK.
-    draw_image(state.dk.sprite, state.map, state.positions[0].x, state.positions[0].y);
-    // Break on start being pressed.
-    if (buttons[4 - 1] == 0) break;
+    myDrawImage(dk_image.pixel_data, dk_image.width, dk_image.height, dkx, dky);
 }
 
 
