@@ -3,8 +3,8 @@
 #include "fb.h"
 
 // include images
-#include "test-art.h"
 #include "dk_image.h"
+#include "enemy.h"
 
 #define MAXOBJECTS 30
 #define SCREENWIDTH 1888
@@ -472,7 +472,11 @@ state.background.img = dk_image.pixel_data;
 state.background.width = dk_image.width;
 state.background.height = dk_image.height;
 
-// Objects for stage 1... for now just DK.
+// Objects for stage 1... DK and an enemy...
+
+state.num_objects = 2;
+
+// DK
 
 state.objects[0].sprite.img = dk_image.pixel_data;
 state.objects[0].sprite.width = dk_image.width;
@@ -480,11 +484,20 @@ state.objects[0].sprite.height = dk_image.height;
 
 state.objects[0].collision = 0;
 
-// DK starting location
 state.objects[0].loc.x = 50;
 state.objects[0].loc.y = 900;
 
-state.num_objects = 1;
+// Enemy
+
+state.objects[1].sprite.img = enemy_image.pixel_data;
+state.objects[1].sprite.width = enemy_image.width;
+state.objects[1].sprite.height = enemy_image.height;
+
+state.objects[1].collision = 0;
+
+state.objects[1].loc.x = 1000;
+state.objects[0].loc.y = 900;
+
 
 // this loop will run while we're in the first stage - break if DK exits stage (moves off the screen?)
 while (1) {
