@@ -1,6 +1,3 @@
-#include <unistd.h>
-#include <stdio.h>
-#include <sys/types.h>
 #include "gpio.h"
 #include "uart.h"
 #include "fb.h"
