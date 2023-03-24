@@ -5,7 +5,7 @@
 // include images
 #include "test-art.h"
 #include "dk_image.h"
-#include "background.h"
+#include "green.h"
 
 #define MAXOBJECTS 30
 #define SCREENWIDTH 1888
