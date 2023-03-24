@@ -413,7 +413,7 @@ while (1) {
 
     if (buttons[4] == 0) {
         // Jump!
-        jump(test_image.pixel_data, test_image.width, test_image.height, dkx, dky, buttons);
+        jump(test_image.pixel_data, test_image.width, test_image.height, &dkx, &dky, buttons);
     }
 
     // Draw DK.
