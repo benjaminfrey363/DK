@@ -325,15 +325,38 @@ int checkCollision(int direction, struct gamestate state)
 }
 
 
+// Controls horizontal movement. Updates object offsets according to which buttons are pressed.
+// Does not print anything.
+// Takes offset arguments as pointers so that these offsets can be edited.
+void move_horz(int *btns, int *offx) {
+    if (btns[6] == 0) {
+        // Pressing left
+        if (*offx > 0) --(*offx);
+    }
+    if (btns[7] == 0) {
+        // Pressing right
+        if (*offx < SCREENWIDTH) ++(*offx);
+    }
+}
+
+
 // Gets sprite to jump, prints this to the screen.
-void jump(unsigned char *pixel_data, int width, int height, int offx, int offy) {
+void jump(unsigned char *pixel_data, int width, int height, int *offx, int *offy, int *btns) {
     for (int i = 0; i <= JUMPHEIGHT; ++i) {
-        // Print sprite at location (offx, offy - i)
-        myDrawImage(pixel_data, width, height, offx, offy - i);
+        // Print sprite at location (offx, offy - i).
+        // Check to see if left or right is pressed and update offx accordingly.
+        read_SNES(buttons);
+        move_horz(buttons, offx);
+        --(*offy);          // Decrement *offy each iteration.
+        myDrawImage(pixel_data, width, height, *offx, *offy);
     }
     // Get sprite to fall back down...
     for (int i = JUMPHEIGHT; i >= 0; --i) {
         // Print sprite at location (offx, offy - i)
+        // Check to see if left or right is pressed and update offx accordingly.
+        read_SNES(buttons);
+        move_horz(buttons, offx);      
+        ++(*offy);          // Increment *offy each iteration.
         myDrawImage(pixel_data, width, height, offx, offy - i);
     }
 }
@@ -386,19 +409,11 @@ while (1) {
     read_SNES(buttons);
 
     // Move DK accordingly.
-
-    if (buttons[6] == 0) {
-        // Pressing left
-        if (dkx > 0) --dkx;
-    }
-    if (buttons[7] == 0) {
-        // Pressing right
-        if (dkx < SCREENWIDTH) ++dkx;
-    }
+    move_horz(buttons, &dkx);
 
     if (buttons[4] == 0) {
         // Jump!
-        jump(test_image.pixel_data, test_image.width, test_image.height, dkx, dky);
+        jump(test_image.pixel_data, test_image.width, test_image.height, dkx, dky, buttons);
     }
 
     // Draw DK.
