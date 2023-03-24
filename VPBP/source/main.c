@@ -177,6 +177,7 @@ struct gamestate
     int score;
     int lives;
     int time;
+    struct startMenu;
 
     // Also track background image...
     struct image background;
@@ -190,7 +191,20 @@ struct gamestate
     int loseflag;
 };
 
+struct startMenu{
+    int startGameSelected;
+    int quitGameSelected;
 
+    struct levelSelect;
+}
+
+struct levelSelect{
+    int levelOneSelected;
+    int levelTwoSelected;
+    int levelThreeSelected;
+    int levelFourSelected;
+
+}
 ///////////////////////
 // DRAWING FUNCTIONS //
 ///////////////////////
@@ -213,6 +227,90 @@ void draw_state(struct gamestate s) {
 
     // TO-DO: ADD IN PRINTING LIVES, SCORE, TIME LEFT.
 
+}
+
+struct startMenu start;
+
+
+/*
+* Start Menu option selection logic. Can either select "Start" or "Quit" in initial menu
+*/
+void startMenuSelectOption(int *buttons){
+    if(buttons[4] ==  0){
+        start.startGameSelected = 1;
+        start.quitGameSelected = 0;
+        //Hover feature on "Start" Button
+    }
+    else if(buttons[5] ==  0){
+        start.startGameSelected = 0;
+        start.quitGameSelected = 1;
+        //Hover feature on "Quit" Button
+    }
+
+    if(buttons[8] == 0){
+        if(start.startGameSelected){
+            //Map select? or Begin Game          
+        }
+        else if(start.quitGameSelected){
+            //Quit Game
+            uart_puts("The Program has been terminated")
+        }
+    }
+}
+
+//After "Start" is selected, User can select level (1-4). Level 1 is hovering initially
+void levelSelection(int *buttons){
+    
+    if(buttons[4] ==  0){
+        if(start.levelSelect.levelTwoSelected == 1){
+            start.levelSelect.levelTwoSelected = 0;
+            start.levelSelect.levelOneSelected = 1;
+            //Hover Text
+        }
+        else if(start.levelSelect.levelThreeSelected == 1){
+            start.levelSelect.levelThreeSelected = 0;
+            start.levelSelect.levelTwoSelected = 1;
+            //Hover Text
+        }
+        else if(start.levelSelect.levelFourSelected == 1){
+            start.levelSelect.levelFourSelected = 0;
+            start.levelSelect.levelThreeSelected = 1;
+            //Hover Text
+        }
+    
+    else if(buttons[5] ==  0){
+        if(start.levelSelect.levelOneSelected == 1){
+            start.levelSelect.levelOneSelected = 0;
+            start.levelSelect.levelTwoSelected = 1;
+            //Hover Text
+        }
+        else if(start.levelSelect.levelTwoSelected == 1){
+            start.levelSelect.levelTwoSelected = 0;
+            start.levelSelect.levelThreeSelected = 1;
+            //Hover Text
+        }
+        else if(start.levelSelect.levelThreeSelected == 1){
+            start.levelSelect.levelThreeSelected = 0;
+            start.levelSelect.levelFourSelected = 1;
+            //Hover Text
+        }
+    }
+
+    if(buttons[8] == 0){
+        if(start.levelSelect.levelOneSelected == 1){
+            //Proceed to gamemap 1;
+        }
+        else if(start.levelSelect.levelTwoSelected == 1){
+            //Proceed to gamemap 2;
+        }
+        else if(start.levelSelect.levelThreeSelected == 1){
+            //Proceed to gamemap 3;
+        }
+        else if(start.levelSelect.levelFourSelected == 1){
+            //Proceed to gamemap 4;
+        }
+
+    }
 }
 
 
