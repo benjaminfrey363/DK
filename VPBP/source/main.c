@@ -384,7 +384,7 @@ while (1) {
     }
     if (buttons[7] == 0) {
         // Pressing right
-        if (dkx < 1280) ++dkx
+        if (dkx < 1280) ++dkx;
     }
 
     // Draw DK.
