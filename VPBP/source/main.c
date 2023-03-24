@@ -5,7 +5,6 @@
 // include images
 #include "test-art.h"
 #include "dk_image.h"
-#include "green.h"
 
 #define MAXOBJECTS 30
 #define SCREENWIDTH 1888
@@ -469,9 +468,9 @@ state.time = 1000;
 
 // Background image for stage 1...
 
-state.background.img = green_image.pixel_data;
-state.background.width = green_image.width;
-state.background.height = green_image.height;
+state.background.img = dk_image.pixel_data;
+state.background.width = dk_image.width;
+state.background.height = dk_image.height;
 
 // Objects for stage 1... for now just DK.
 
