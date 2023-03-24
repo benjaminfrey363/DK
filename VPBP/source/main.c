@@ -5,6 +5,7 @@
 // include images
 #include "test-art.h"
 #include "dk_image.h"
+#include "background.h"
 
 #define MAXOBJECTS 30
 #define SCREENWIDTH 1888
@@ -468,12 +469,9 @@ state.time = 1000;
 
 // Background image for stage 1...
 
-struct image back1;
-// Test - use DK image as background.
-back1.img = dk_image.pixel_data;
-back1.width = dk_image.width;
-back1.height = dk_image.height;
-state.background = back1;
+state.background.img = bg_image.pixel_data;
+state.background.width = bg_image.width;
+state.background.height = bg_image.height;
 
 // Objects for stage 1... for now just DK.
 
