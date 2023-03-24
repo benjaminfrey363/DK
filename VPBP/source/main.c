@@ -205,13 +205,13 @@ void draw_image(struct image myimg, int offx, int offy) {
 
 
 // Main drawing method - draws a game state.
-void draw_gamestate(struct gamestate state) {
+void draw_state(struct gamestate s) {
     // First, draw background at the origin...
-    draw_image(state.background, 0, 0);
+    draw_image(s.background, 0, 0);
     // Draw each object...
-    for (int i = 0; i < state.num_objects; ++i) {
+    for (int i = 0; i < s.num_objects; ++i) {
         // Print state.objects[i]
-        draw_image(state.objects[i].sprite, state.objects[i].loc.x, state.objects[i].loc.y);
+        draw_image(s.objects[i].sprite, s.objects[i].loc.x, s.objects[i].loc.y);
     }
 
     // TO-DO: ADD IN PRINTING LIVES, SCORE, TIME LEFT.
@@ -399,24 +399,25 @@ void move_horz(int *btns, int *offx) {
 }
 
 
+// TO-DO: GET TO TAKE GAMESTATE PTR AS ARGUMENT RATHER THAN AN OBJECT PTR
 // Gets sprite to jump, prints this to the screen.
-void jump(struct object jumper, int *btns) {
+void jump(struct object *jumper_ptr, int *btns) {
     for (int i = 0; i <= JUMPHEIGHT; ++i) {
         // Print sprite at location (offx, offy - i).
         // Check to see if left or right is pressed and update offx accordingly.
         read_SNES(buttons);
-        move_horz(buttons, &(jumper.loc.x));
-        --jumper.loc.y;          // Decrement offy each iteration.
-        draw_image(jumper.sprite, jumper.loc.x, jumper.loc.y);
+        move_horz(buttons, &((*jumper_ptr).loc.x));
+        --((*jumper_ptr).loc.y);		// Decrement offy each iteration.
+        draw_image((*jumper_ptr).sprite, (*jumper_ptr).loc.x, (*jumper_ptr).loc.y);
     }
     // Get sprite to fall back down...
     for (int i = JUMPHEIGHT; i >= 0; --i) {
         // Print sprite at location (offx, offy - i)
         // Check to see if left or right is pressed and update offx accordingly.
         read_SNES(buttons);
-        move_horz(buttons, &(jumper.loc.x));      
-        ++jumper.loc.y;          // Increment *offy each iteration.
-        draw_image(jumper.sprite, jumper.loc.x, jumper.loc.y);
+        move_horz(buttons, &((*jumper_ptr).loc.x));      
+        ++(*jumper_ptr).loc.y;			// Increment *offy each iteration.
+        draw_image((*jumper_ptr).sprite, (*jumper_ptr).loc.x, (*jumper_ptr).loc.y);
     }
 }
 
@@ -491,8 +492,6 @@ state.objects[0].loc.y = 900;
 
 state.num_objects = 1;
 
-struct object dk = state.objects[0];
-
 // this loop will run while we're in the first stage - break if DK exits stage (moves off the screen?)
 while (1) {
 
@@ -500,21 +499,29 @@ while (1) {
     read_SNES(buttons);
 
     // Move DK accordingly.
-    move_horz(buttons, &dk.loc.x);
+    move_horz(buttons, &state.objects[0].loc.x);
 
     // Jump with the B button (button code 1)
     if (buttons[0] == 0) {
-        // Jump!
-        jump(dk, buttons);
+        // Get DK to jump...
+        jump(state.objects, buttons);
     }
 
-    /*
-    // Draw gamestate.
-    draw_gamestate(state);
-    */
-    // Bypass - draw DK
-    draw_image(dk.sprite, dk.loc.x,dk.loc.y);
-
+    // Draw gamestate - not working, makefile error. Asked TA, temporarily replacing with body of draw_state.
+    // draw_state(state);
+    
+    // draw_state:
+    
+    // First, draw background at the origin...
+    draw_image(state.background, 0, 0);
+    // Draw each object...
+    for (int i = 0; i < state.num_objects; ++i) {
+        // Print state.objects[i]
+        draw_image(state.objects[i].sprite, state.objects[i].loc.x, state.objects[i].loc.y);
+    }
+    
+    
+    
 }
 
 return 1;
