@@ -358,26 +358,19 @@ while (1) {
 	if (buttons[4 - 1] == 0) break;			// Break if start is pressed.
 }
 
-// Initialize position of dk in pixel coords. Temporarily using separate variables.
-int dkx = 500;
-int dky = 300;
-
-myDrawImage(test_image.pixel_data, test_image.width, test_image.height, dkx, dky);
+// Initialize position of dk in pixel coords. DK starts in the bottom left hand corner of the screen.
+int dkx = 50;
+int dky = 700;
 
 // this loop will run while we're in the first stage - break if DK exits stage (moves off the screen?)
+// TEST - DK can move left or right, not up or down.
 while (1) {
+
     // Read controller.
     read_SNES(buttons);
+    
     // Move DK accordingly.
 
-    if (buttons[4] == 0) {
-        // Pressing up
-        if (dky > 0) --dky; 
-    }
-    if (buttons[5] == 0) {
-        // Pressing down
-        if (dky < 720) ++dky;
-    }
     if (buttons[6] == 0) {
         // Pressing left
         if (dkx > 0) --dkx;
