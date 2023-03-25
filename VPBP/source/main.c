@@ -8,6 +8,7 @@
 
 #define MAXOBJECTS 30
 #define SCREENWIDTH 1888
+#define SCREENHEIGHT 1000
 #define JUMPHEIGHT 100
 
 // GPIO macros
@@ -168,12 +169,16 @@ struct object
     struct image sprite;        // sprite.
     int collision;              // collision flag.
     struct coord loc;           // Coordinate location.
+    int speed;
 };
 
 
 // Gamestate structure
 struct gamestate
 {
+    int width;
+    int height;
+
     int score;
     int lives;
     int time;
@@ -217,13 +222,15 @@ void draw_image(struct image myimg, int offx, int offy) {
 
 
 // Main drawing method - draws a game state.
+// Coordinates of all objects are in grid coords, so need to convert these to pixel
+// coords in order to draw.
 void draw_state(struct gamestate s) {
     // First, draw background at the origin...
     draw_image(s.background, 0, 0);
     // Draw each object...
     for (int i = 0; i < s.num_objects; ++i) {
-        // Print state.objects[i]
-        draw_image(s.objects[i].sprite, s.objects[i].loc.x, s.objects[i].loc.y);
+        // Print state.objects[i] with grid coords (x, y) at location (x * SCREENWIDTH/state.width, y * SCREENHEIGHT/state.height)
+        draw_image(s.objects[i].sprite, s.objects[i].loc.x * (SCREENWIDTH / s.width), s.objects[i].loc.y * (SCREENHEIGHT / s.height));
     }
 
     // TO-DO: ADD IN PRINTING LIVES, SCORE, TIME LEFT.
@@ -235,27 +242,27 @@ void draw_state(struct gamestate s) {
 * Start Menu option selection logic. Can either select "Start" or "Quit" in initial menu.
 * Returns 1 if start is selected, -1 if quit is selected, and 0 if nothing has been selected.
 */
-int startMenuSelectOption(int *buttons, struct startMenu start){
+int startMenuSelectOption(int *buttons, struct startMenu *start){
     if(buttons[4] ==  0){
         // JP Up pressed - move to "start"
-        start.startGameSelected = 1;
-        start.quitGameSelected = 0;
+        (*start).startGameSelected = 1;
+        (*start).quitGameSelected = 0;
         //Hover feature on "Start" Button
     }
     else if(buttons[5] ==  0){
         // JP Down pressed - move to "quit" button
-        start.startGameSelected = 0;
-        start.quitGameSelected = 1;
+        (*start).startGameSelected = 0;
+        (*start).quitGameSelected = 1;
         //Hover feature on "Quit" Button
     }
 
     if(buttons[8] == 0){
         // 'A' is pressed
-        if(start.startGameSelected){
+        if((*start).startGameSelected){
             // Begin game.
             return 1;   
         }
-        else if(start.quitGameSelected){
+        else if((*start).quitGameSelected){
             //Quit Game
             return -1;
         }
@@ -332,94 +339,78 @@ void levelSelection(int *buttons) {
  * int direction () can be changed to be the direct output from the controller instead of
  * converting the input to an integer. A directional input will check to ensure that DK
  * will still be on the screen and will not collide hit with an object.
- */
+*/
 
-/*
-void DKmove(int *buttons, struct gamestate state)
+void DKmove(int *buttons, struct gamestate *state)
 {
-    int direction;
     if (buttons[4] == 0)
-    {
-        direction = 3;
-    }
-    else if (buttons[5] == 0)
-    {
-        direction = 4;
-    }
-    else if (buttons[7] == 0)
-    {
-        direction = 1;
-    }
-    else if (buttons[6] == 0)
-    {
-        direction = 2;
-    }
-
-    if (direction == 1)
     {                                           // Right
-        if (state.positions[0].x + 1 <= 22) // Ensure that DK does not step outside of screen
+        if (*state.objects[0].loc.x + *state.objects[0].speed <= *state.width) 
+        // Ensure that DK does not step outside of screen
         {
-            if (checkCollision(1) != 1)
+            if (/*checkCollision(1) != 1*/ 1)
             { // Check if DK will collide with an Object
-                state.positions[0].x += state.dk.speed;
-                state.dk.collision = 0;
+                *state.objects[0].loc.x += *state.objects[0].speed;
+                *state.objects[0].collision = 0;
             }
             else
             {
-                state.dk.collision = 1;
+                *state.objects[0].collision = 1;
             }
         }
     }
 
-    else if (direction == 2)
+    else if (buttons[5] == 0)
     {                                          // Left
-        if (state.positions[0].x - 1 >= 0) // Ensure that DK does not step outside of screen
+        if (*state.objects[0].loc.x - *state.objects[0].speed >= 0) 
+        // Ensure that DK does not step outside of screen
         {
-            if (checkCollision(2) != 1)
+            if (/*checkCollision(2) != 1*/ 1)
             {
-                state.positions[0].x -= state.dk.speed;
-                state.dk.collision = 0;
+                *state.objects[0].loc.x -= *state.objects[0].speed;
+                *state.objects[0].collision = 0;
             }
             else
             {
-                state.dk.collision = 1;
+                *state.objects[0].collision = 1;
             }
         }
     }
 
-    else if (direction == 3)
+    else if (buttons[7] == 0)
     {                                          // Up
-        if (state.positions[0].y - 1 >= 0) // Ensure that DK does not step outside of screen
+        if (state.objects[0].loc.y - *state.objects[0].speed >= 0) 
+        // Ensure that DK does not step outside of screen
         {
-            if (checkCollision(3) != 1)
+            if (/*checkCollision(3) != 1*/ 1)
             {
-                state.positions[0].y -= state.dk.speed;
-                state.dk.collision = 0;
+                *state.objects[0].loc.y -= *state.objects[0].speed;
+                *state.objects[0].collision = 0;
             }
             else
             {
-                state.dk.collision = 1;
+                *state.objects[0].collision = 1;
             }
         }
     }
 
-    else if (direction == 4)
+    else if (buttons[6] == 0)
     {                                           // Down
-        if (state.positions[0].y + 1 <= 20) // Ensure that DK does not step outside of screen
+        if (*state.objects[0].loc.y + *state.objects[0].speed <= *state.height) 
+        // Ensure that DK does not step outside of screen
         {
-            if (checkCollision(4) != 1)
+            if (/*checkCollision(4) != 1*/ 1)
             {
-                state.positions[0].y += state.dk.speed;
-                state.dk.collision = 0;
+                *state.objects[0].loc.y += *state.objects[0].speed;
+                *state.objects[0].collision = 0;
             }
             else
             {
-                state.dk.collision = 1;
+                *state.objects[0].collision = 1;
             }
         }
     }
 }
-*/
 
 
 /*
@@ -486,7 +477,7 @@ int checkCollision(int direction, struct gamestate state)
 }
 */
 
-
+/*
 // Controls horizontal movement. Updates object offsets according to which buttons are pressed.
 // Does not print anything.
 // Takes offset arguments as pointers so that these offsets can be edited.
@@ -500,29 +491,60 @@ void move_horz(int *btns, int *offx) {
         if (*offx < SCREENWIDTH) ++(*offx);
     }
 }
+*/
 
-
-// TO-DO: GET TO TAKE GAMESTATE PTR AS ARGUMENT RATHER THAN AN OBJECT PTR
-// Gets sprite to jump, prints this to the screen.
-void jump(struct object *jumper_ptr, int *btns) {
+/*
+// Takes a gamestate as an argument. Gets DK to jump, while continuing to take button
+// inputs and updating x position accordingly. Continues updating enemy positions as well
+// (done randomly), and prints the gamestate at each step.
+void jump(struct gamestate *state_ptr, int *btns) {
     for (int i = 0; i <= JUMPHEIGHT; ++i) {
         // Print sprite at location (offx, offy - i).
         // Check to see if left or right is pressed and update offx accordingly.
         read_SNES(buttons);
-        move_horz(buttons, &((*jumper_ptr).loc.x));
-        --((*jumper_ptr).loc.y);		// Decrement offy each iteration.
-        draw_image((*jumper_ptr).sprite, (*jumper_ptr).loc.x, (*jumper_ptr).loc.y);
+        move_horz(buttons, &((*state_ptr).objects[0].loc.x));
+        --((*state_ptr).objects[0].loc.y);		// Decrement offy each iteration.
+        
+	// Randomly update locations of enemies...
+	
+	for (int i = 1; i < (*state_ptr).num_objects; ++i) {
+		// For now all random movement is left
+		move_rand(&((*state_ptr).objects[i]), 1);
+	}
+
+	// Draw gamestate.
+	// First draw background...
+	draw_image((*state_ptr).background, 0, 0);
+	// Draw each object...
+	for (int i = 0; i < (*state_ptr).num_objects; ++i)
+		draw_image((*state_ptr).objects[i].sprite, (*state_ptr).objects[i].loc.x, (*state_ptr).objects[i].loc.y);
     }
+
     // Get sprite to fall back down...
     for (int i = JUMPHEIGHT; i >= 0; --i) {
         // Print sprite at location (offx, offy - i)
         // Check to see if left or right is pressed and update offx accordingly.
         read_SNES(buttons);
-        move_horz(buttons, &((*jumper_ptr).loc.x));      
-        ++(*jumper_ptr).loc.y;			// Increment *offy each iteration.
-        draw_image((*jumper_ptr).sprite, (*jumper_ptr).loc.x, (*jumper_ptr).loc.y);
+        move_horz(buttons, &((*state_ptr).objects[0].loc.x));      
+        ++((*state_ptr).objects[0].loc.y);		// Increment *offy each iteration.
+        
+        // Randomly update locations of enemies...
+	
+	for (int i = 1; i < (*state_ptr).num_objects; ++i) {
+		// For now all random movement is left
+		move_rand(&((*state_ptr).objects[i]), 1);
+	}
+
+	// Draw gamestate.
+	// First draw background...
+	draw_image((*state_ptr).background, 0, 0);
+	// Draw each object...
+	for (int i = 0; i < (*state_ptr).num_objects; ++i)
+		draw_image((*state_ptr).objects[i].sprite, (*state_ptr).objects[i].loc.x, (*state_ptr).objects[i].loc.y);
+        
     }
 }
+*/
 
 
 // Randomly moves the passed object horizontally.
@@ -562,36 +584,40 @@ for (int i = 0; i < 16; ++i) buttons[i] = 1;
 init_snes_lines();
 fb_init();
 
-////////////////
-// START MENU //
-////////////////
+/////////////////////////////////
+// START MENU - BASICALLY DONE //
+/////////////////////////////////
 
 struct startMenu sm;
 sm.startGameSelected = 1;
 sm.quitGameSelected = 0;
 int start_flag = 0;
 while (start_flag == 0) {
+    // Display selection options with currently selected option being pointed to...
+    if (sm.startGameSelected) {
+    	drawString(300, 300, "-> START GAME", 0xF);
+    	drawString(300, 350, "QUIT GAME", 0xF);
+    } else if (sm.quitGameSelected) {
+	drawString(300, 300, "START GAME", 0xF);
+	drawString(300, 350, "-> QUIT GAME", 0xF);
+    }
     // Loop while startMenuSelectOption returns 0 - so breaks when player presses
     // A on either start or quit option.
     read_SNES(buttons);
-    start_flag = startMenuSelectOption(buttons, sm);
+    // Pass address of sm so that flag attributes can be modified by function.
+    start_flag = startMenuSelectOption(buttons, &sm);
 }
 
 if (start_flag == -1) {
     // Quit game...
+    drawString(400, 400, "Exiting game...", 0xF);
     printf("Quitting game...\n");
     return 1;
 }
 
+drawString(400, 400, "Starting game...", 0xF);
 printf("Starting game...\n");
 
-/*
-// Wait for start button to be pressed...
-while (1) {
-    read_SNES(buttons);                     // Read buttons.
-	if (buttons[4 - 1] == 0) break;			// Break if start is pressed.
-}
-*/
 
 /////////////////
 // FIRST STAGE //
@@ -600,6 +626,9 @@ while (1) {
 // Set up game state...
 
 struct gamestate state;
+
+state.width = 20;
+state.height = 20;
 
 state.score = 0;
 state.lives = 4;
@@ -645,31 +674,13 @@ while (1) {
     read_SNES(buttons);
 
     // Move DK accordingly.
-    move_horz(buttons, &state.objects[0].loc.x);
-
-    // Jump with the B button (button code 1)
-    if (buttons[0] == 0) {
-        // Get DK to jump...
-        jump(state.objects, buttons);
-    }
+    DKmove(buttons, &state);
 
     // Move enemies randomly - for now one enemy, done manually:
     move_rand(&state.objects[1], 1);
-
-// Draw gamestate - not working, makefile error. Asked TA, temporarily replacing with body of draw_state.
-// draw_state(state);
     
-    // draw_state:
-    
-    // First, draw background at the origin...
-    draw_image(state.background, 0, 0);
-    // Draw each object...
-    for (int i = 0; i < state.num_objects; ++i) {
-        // Print state.objects[i]
-        draw_image(state.objects[i].sprite, state.objects[i].loc.x, state.objects[i].loc.y);
-    }
-    
-    
+    // Draw the game state...
+    draw_state(state);
     
 }
 
