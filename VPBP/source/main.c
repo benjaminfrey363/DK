@@ -811,7 +811,7 @@ while (!state.winflag && !state.loseflag) {
     state.time = 1000 - ((*clo - initial_time)/1000);
 
     // Before drawing game state, erase old drawing of DK...
-    draw_grid(state.background, state.dk.loc.x, state.dk.loc.y, state);
+    draw_image(state.background, state.dk.loc.x * (SCREENWIDTH / state.width), state.dk.loc.y * (SCREENHEIGHT / state.height));
 
     // Draw the game state... (have to insert function body)
     
