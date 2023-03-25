@@ -177,7 +177,6 @@ struct gamestate
     int score;
     int lives;
     int time;
-    struct startMenu start;
 
     // Also track background image...
     struct image background;
@@ -191,13 +190,12 @@ struct gamestate
     int loseflag;
 };
 
-struct startMenu{
+struct startMenu {
     int startGameSelected;
     int quitGameSelected;
-
-    struct levelSelect levels;
 };
 
+/*
 struct levelSelect{
     int levelOneSelected;
     int levelTwoSelected;
@@ -205,6 +203,7 @@ struct levelSelect{
     int levelFourSelected;
 
 };
+*/
 
 
 ///////////////////////
@@ -231,14 +230,12 @@ void draw_state(struct gamestate s) {
 
 }
 
-struct startMenu start;
-
 
 /*
 * Start Menu option selection logic. Can either select "Start" or "Quit" in initial menu.
 * Returns 1 if start is selected, -1 if quit is selected, and 0 if nothing has been selected.
 */
-int startMenuSelectOption(int *buttons){
+int startMenuSelectOption(int *buttons, struct startMenu start){
     if(buttons[4] ==  0){
         // JP Up pressed - move to "start"
         start.startGameSelected = 1;
@@ -266,6 +263,7 @@ int startMenuSelectOption(int *buttons){
     return 0;
 }
 
+/*
 //After "Start" is selected, User can select level (1-4). Level 1 is hovering initially
 void levelSelection(int *buttons) {
     
@@ -321,6 +319,7 @@ void levelSelection(int *buttons) {
 
     }
 }
+*/
 
 
 ////////////////////////
@@ -567,12 +566,15 @@ fb_init();
 // START MENU //
 ////////////////
 
+struct startMenu sm;
+sm.startGameSelected = 1;
+sm.quitGameSelected = 0;
 int start_flag = 0;
 while (start_flag == 0) {
     // Loop while startMenuSelectOption returns 0 - so breaks when player presses
     // A on either start or quit option.
     read_SNES(buttons);
-    start_flag = startMenuSelectOption(buttons);
+    start_flag = startMenuSelectOption(buttons, sm);
 }
 
 if (start_flag == -1) {
