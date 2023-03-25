@@ -5,6 +5,8 @@
 // include images
 #include "dk_image.h"
 #include "enemy.h"
+#include "coin.h"
+#include "health.h"
 
 #define MAXOBJECTS 30
 #define SCREENWIDTH 1888
@@ -170,7 +172,6 @@ struct coord
 struct object
 {
     struct image sprite;        // sprite.
-    int collision;              // collision flag.
     struct coord loc;           // Coordinate location.
     int speed;
 
@@ -180,6 +181,10 @@ struct object
     
     // Immunity flag, only used for dk.
     int dk_immunity;
+
+    // Pack type flags, only used for packs.
+    int health_pack;
+    int point_pack;
 
 };
 
@@ -721,15 +726,13 @@ state.background.img = dk_image.pixel_data;
 state.background.width = dk_image.width;
 state.background.height = dk_image.height;
 
-// Objects for stage 1... DK and an two enemies...
+// Objects for stage 1...
 
 // DK
 
 state.dk.sprite.img = dk_image.pixel_data;
 state.dk.sprite.width = dk_image.width;
 state.dk.sprite.height = dk_image.height;
-
-state.dk.collision = 0;
 
 state.dk.loc.x = 2;
 state.dk.loc.y = 16;
@@ -742,13 +745,12 @@ state.dk.dk_immunity = 0;
 state.num_enemies = 2;
 
 for (int i = 0; i < 2; ++i) {
-        state.enemies[i].sprite.img = enemy_image.pixel_data;
-        state.enemies[i].sprite.width = enemy_image.width;
-        state.enemies[i].sprite.height = enemy_image.height;
+    state.enemies[i].sprite.img = enemy_image.pixel_data;
+    state.enemies[i].sprite.width = enemy_image.width;
+    state.enemies[i].sprite.height = enemy_image.height;
 
-        state.enemies[i].collision = 0;
-        state.enemies[i].speed = 1;
-        state.enemies[i].enemy_direction = 0;
+    state.enemies[i].speed = 1;
+    state.enemies[i].enemy_direction = 0;
 }
 
 state.enemies[0].loc.x = 10;
@@ -759,7 +761,35 @@ state.enemies[1].loc.y = 18;
 
 // Packs
 
-state.num_packs = 0;
+state.num_packs = 2;
+
+// Health packs...
+
+for (int i = 0; i < 1; ++i) {
+    state.packs[i].sprite.img = health_image.pixel_data;
+    state.packs[i].sprite.width = health_image.width;
+    state.packs[i].sprite.height = health_image.height;
+
+    state.packs[i].health_pack = 1;
+    state.packs[i].point_pack = 0;
+}
+
+state.packs[0].loc.x = 14;
+state.packs[0].loc.y = 6;
+
+// Point packs...
+
+for (int i = 1; i < 2; ++i) {
+    state.packs[i].sprite.img = coin_image.pixel_data;
+    state.packs[i].sprite.width = coin_image.width;
+    state.packs[i].sprite.height = coin_image.height;
+
+    state.packs[i].health_pack = 0;
+    state.packs[i].point_pack = 1;
+}
+
+state.packs[1].loc.x = 3;
+state.packs[1].loc.y = 4;
 
 // Record time in microseconds when first stage began...
 int initial_time = *clo; 
@@ -777,22 +807,33 @@ while (!state.winflag && !state.loseflag) {
     
     // Check to see if DK has collided with an enemy. DK can only be hurt if his immunity is turned off.
     if (!state.dk.dk_immunity){
-    for (int i = 0; i < state.num_enemies; ++i) {
-	if (state.dk.loc.x == state.enemies[i].loc.x && state.dk.loc.y == state.enemies[i].loc.y) {
-		--state.lives;
-		printf("Lost a life\n");
-		// Give DK immunity - he can't be hurt until he leaves this cell.
-		state.dk.dk_immunity = 1;
-		// Set lose flag if out of lives.
-		if (state.lives == 0) state.loseflag = 1;
-	}
-    }
+        for (int i = 0; i < state.num_enemies; ++i) {
+	        if (state.dk.loc.x == state.enemies[i].loc.x && state.dk.loc.y == state.enemies[i].loc.y) {
+		        --state.lives;
+		        printf("Lost a life\n");
+		        // Give DK immunity - he can't be hurt until he leaves this cell.
+		        state.dk.dk_immunity = 1;
+		        // Set lose flag if out of lives.
+		        if (state.lives == 0) state.loseflag = 1;
+	        }
+        }
     }
 
 
     // Check to see if DK has collided with a pack...
 
-
+    for (int i = 0; i < state.num_packs; ++i) {
+        if (state.dk.loc.x == state.packs[i].loc.x && state.dk.loc.y == state.packs[i].loc.y) {
+            // See which kind of pack DK has collided with, update gamestate accordingly.
+            if (state.packs[i].health_pack) {
+                // Give DK an extra life if he has less than 4.
+                if (state.lives < 4) ++state.lives;
+            } else if (state.packs[i].point_pack) {
+                // Give DK 1000 points.
+                state.score += 1000;
+            }
+        }
+    }
 
     // Check to see if DK has reached the top of the screen (end of level)
     if (state.dk.loc.y == 0) state.winflag = 1;
