@@ -177,7 +177,7 @@ struct gamestate
     int score;
     int lives;
     int time;
-    struct startMenu;
+    struct startMenu start;
 
     // Also track background image...
     struct image background;
@@ -195,8 +195,8 @@ struct startMenu{
     int startGameSelected;
     int quitGameSelected;
 
-    struct levelSelect;
-}
+    struct levelSelect levels;
+};
 
 struct levelSelect{
     int levelOneSelected;
@@ -204,7 +204,9 @@ struct levelSelect{
     int levelThreeSelected;
     int levelFourSelected;
 
-}
+};
+
+
 ///////////////////////
 // DRAWING FUNCTIONS //
 ///////////////////////
