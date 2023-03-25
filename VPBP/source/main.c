@@ -233,33 +233,39 @@ struct startMenu start;
 
 
 /*
-* Start Menu option selection logic. Can either select "Start" or "Quit" in initial menu
+* Start Menu option selection logic. Can either select "Start" or "Quit" in initial menu.
+* Returns 1 if start is selected, -1 if quit is selected, and 0 if nothing has been selected.
 */
-void startMenuSelectOption(int *buttons){
+int startMenuSelectOption(int *buttons){
     if(buttons[4] ==  0){
+        // JP Up pressed - move to "start"
         start.startGameSelected = 1;
         start.quitGameSelected = 0;
         //Hover feature on "Start" Button
     }
     else if(buttons[5] ==  0){
+        // JP Down pressed - move to "quit" button
         start.startGameSelected = 0;
         start.quitGameSelected = 1;
         //Hover feature on "Quit" Button
     }
 
     if(buttons[8] == 0){
+        // 'A' is pressed
         if(start.startGameSelected){
-            //Map select? or Begin Game          
+            // Begin game.
+            return 1;   
         }
         else if(start.quitGameSelected){
             //Quit Game
-            uart_puts("The Program has been terminated")
+            return -1;
         }
     }
+    return 0;
 }
 
 //After "Start" is selected, User can select level (1-4). Level 1 is hovering initially
-void levelSelection(int *buttons){
+void levelSelection(int *buttons) {
     
     if(buttons[4] ==  0){
         if(start.levelSelect.levelTwoSelected == 1){
@@ -277,6 +283,7 @@ void levelSelection(int *buttons){
             start.levelSelect.levelThreeSelected = 1;
             //Hover Text
         }
+    }
     
     else if(buttons[5] ==  0){
         if(start.levelSelect.levelOneSelected == 1){
@@ -554,15 +561,33 @@ for (int i = 0; i < 16; ++i) buttons[i] = 1;
 init_snes_lines();
 fb_init();
 
-// TO-DO: Display start menu (for now test image in top left corner)
+////////////////
+// START MENU //
+////////////////
 
-myDrawImage(dk_image.pixel_data, dk_image.width, dk_image.height, 100, 100);
+int start_flag = 0;
+while (start_flag == 0) {
+    // Loop while startMenuSelectOption returns 0 - so breaks when player presses
+    // A on either start or quit option.
+    read_SNES(buttons);
+    start_flag = startMenuSelectOption(buttons);
+}
 
+if (start_flag == -1) {
+    // Quit game...
+    printf("Quitting game...\n");
+    return 1;
+}
+
+printf("Starting game...\n");
+
+/*
 // Wait for start button to be pressed...
 while (1) {
     read_SNES(buttons);                     // Read buttons.
 	if (buttons[4 - 1] == 0) break;			// Break if start is pressed.
 }
+*/
 
 /////////////////
 // FIRST STAGE //
