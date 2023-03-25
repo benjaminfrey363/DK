@@ -345,68 +345,68 @@ void DKmove(int *buttons, struct gamestate *state)
 {
     if (buttons[4] == 0)
     {                                           // Right
-        if (*state.objects[0].loc.x + *state.objects[0].speed <= *state.width) 
+        if ((*state).objects[0].loc.x + (*state).objects[0].speed <= (*state).width) 
         // Ensure that DK does not step outside of screen
         {
             if (/*checkCollision(1) != 1*/ 1)
             { // Check if DK will collide with an Object
-                *state.objects[0].loc.x += *state.objects[0].speed;
-                *state.objects[0].collision = 0;
+                (*state).objects[0].loc.x += (*state).objects[0].speed;
+                (*state).objects[0].collision = 0;
             }
             else
             {
-                *state.objects[0].collision = 1;
+                (*state).objects[0].collision = 1;
             }
         }
     }
 
     else if (buttons[5] == 0)
     {                                          // Left
-        if (*state.objects[0].loc.x - *state.objects[0].speed >= 0) 
+        if ((*state).objects[0].loc.x - (*state).objects[0].speed >= 0) 
         // Ensure that DK does not step outside of screen
         {
             if (/*checkCollision(2) != 1*/ 1)
             {
-                *state.objects[0].loc.x -= *state.objects[0].speed;
-                *state.objects[0].collision = 0;
+                (*state).objects[0].loc.x -= (*state).objects[0].speed;
+                (*state).objects[0].collision = 0;
             }
             else
             {
-                *state.objects[0].collision = 1;
+                (*state).objects[0].collision = 1;
             }
         }
     }
 
     else if (buttons[7] == 0)
     {                                          // Up
-        if (state.objects[0].loc.y - *state.objects[0].speed >= 0) 
+        if ((*state).objects[0].loc.y - (*state).objects[0].speed >= 0) 
         // Ensure that DK does not step outside of screen
         {
             if (/*checkCollision(3) != 1*/ 1)
             {
-                *state.objects[0].loc.y -= *state.objects[0].speed;
-                *state.objects[0].collision = 0;
+                (*state).objects[0].loc.y -= (*state).objects[0].speed;
+                (*state).objects[0].collision = 0;
             }
             else
             {
-                *state.objects[0].collision = 1;
+                (*state).objects[0].collision = 1;
             }
         }
     }
 
     else if (buttons[6] == 0)
     {                                           // Down
-        if (*state.objects[0].loc.y + *state.objects[0].speed <= *state.height) 
+        if ((*state).objects[0].loc.y + (*state).objects[0].speed <= (*state).height) 
         // Ensure that DK does not step outside of screen
         {
             if (/*checkCollision(4) != 1*/ 1)
             {
-                *state.objects[0].loc.y += *state.objects[0].speed;
-                *state.objects[0].collision = 0;
+                (*state).objects[0].loc.y += (*state).objects[0].speed;
+                (*state).objects[0].collision = 0;
             }
             else
             {
-                *state.objects[0].collision = 1;
+                (*state).objects[0].collision = 1;
             }
         }
     }
