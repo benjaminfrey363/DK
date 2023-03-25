@@ -11,6 +11,9 @@
 #define SCREENHEIGHT 1000
 #define JUMPHEIGHT 100
 
+#define FONT_WIDTH 8
+#define FONT_HEIGHT 8
+
 // GPIO macros
 
 #define GPIO_BASE 0xFE200000
@@ -170,6 +173,14 @@ struct object
     int collision;              // collision flag.
     struct coord loc;           // Coordinate location.
     int speed;
+
+    // enemy_direction determines which direction moving enemies will walk.
+    // 0 for left, 1 for right.
+    int enemy_direction;
+    
+    // Immunity flag, only used for dk.
+    int dk_immunity;
+
 };
 
 
@@ -186,9 +197,16 @@ struct gamestate
     // Also track background image...
     struct image background;
 
-    // Tracks an array of objects.
-    struct object objects[MAXOBJECTS];
-    int num_objects;        // Actual # of objects in world.
+    // Tracks an array of enemies and packs.
+    struct object enemies[MAXOBJECTS];
+    int num_enemies;        // Actual # of enemies in world.
+
+    struct object packs[MAXOBJECTS];
+    int num_packs;          // Actual # of packs in world.
+    
+    // Also track dk.
+    
+    struct object dk;
 
     // Flags.
     int winflag;
@@ -215,7 +233,18 @@ struct levelSelect{
 // DRAWING FUNCTIONS //
 ///////////////////////
 
-// Draws an image structure at specified pixel offsets.
+// Draws an int at specified pixel offsets (right end of number at offx)
+void draw_int(unsigned int n, int offx, int offy, unsigned char attr) {
+    while (n > 0) {
+	// Print the smallest digit of n.
+	char digit = (n % 10) + 48;
+	drawChar(digit, offx, offy, attr);
+	offx -= FONT_WIDTH;
+	n = n / 10;
+    }
+}
+
+// Draws an image structure at specified pixel offsets
 void draw_image(struct image myimg, int offx, int offy) {
     myDrawImage(myimg.img, myimg.width, myimg.height, offx, offy);
 }
@@ -224,17 +253,37 @@ void draw_image(struct image myimg, int offx, int offy) {
 // Main drawing method - draws a game state.
 // Coordinates of all objects are in grid coords, so need to convert these to pixel
 // coords in order to draw.
-void draw_state(struct gamestate s) {
+void draw_state(struct gamestate state) {
+
     // First, draw background at the origin...
-    draw_image(s.background, 0, 0);
-    // Draw each object...
-    for (int i = 0; i < s.num_objects; ++i) {
-        // Print state.objects[i] with grid coords (x, y) at location (x * SCREENWIDTH/state.width, y * SCREENHEIGHT/state.height)
-        draw_image(s.objects[i].sprite, s.objects[i].loc.x * (SCREENWIDTH / s.width), s.objects[i].loc.y * (SCREENHEIGHT / s.height));
+    draw_image(state.background, 0, 0);
+    
+    // Draw DK...
+    draw_image(state.dk.sprite, state.dk.loc.x * (SCREENWIDTH / state.width), state.dk.loc.y * (SCREENHEIGHT / state.height));
+    
+    // Draw each enemy...
+    for (int i = 0; i < state.num_enemies; ++i) {
+        // Print state.enemies[i] with grid coords (x, y) at location (x * SCREENWIDTH/state.width, y * SCREENHEIGHT/state.height)
+        draw_image(state.enemies[i].sprite, state.enemies[i].loc.x * (SCREENWIDTH / state.width), state.enemies[i].loc.y * (SCREENHEIGHT / state.height));
+    }
+    
+    // Draw each pack...
+    for (int i = 0; i < state.num_packs; ++i) {
+        // Print state.packs[i] with grid coords (x, y) at location (x * SCREENWIDTH/state.width, y * SCREENHEIGHT/state.height)
+        draw_image(state.packs[i].sprite, state.packs[i].loc.x * (SCREENWIDTH / state.width), state.packs[i].loc.y * (SCREENHEIGHT / state.height));
     }
 
-    // TO-DO: ADD IN PRINTING LIVES, SCORE, TIME LEFT.
+    // Print score...
+    draw_int(state.score, SCREENWIDTH, FONT_HEIGHT, 0xF);
+    drawString(SCREENWIDTH - 200, FONT_HEIGHT, "SCORE:", 0xF);
 
+    // Print time remaining...
+    draw_int(state.time, SCREENWIDTH, 2*FONT_HEIGHT, 0xF);
+    drawString(SCREENWIDTH - 200, 2*FONT_HEIGHT, "TIME:", 0xF);
+
+    // Print lives remaining... (replace with hearts later)    
+    draw_int(state.lives, SCREENWIDTH, 3*FONT_HEIGHT, 0xF);
+    drawString(SCREENWIDTH - 200, 3*FONT_HEIGHT, "LIVES:", 0xF);
 }
 
 
@@ -343,73 +392,100 @@ void levelSelection(int *buttons) {
 
 void DKmove(int *buttons, struct gamestate *state)
 {
-    if (buttons[4] == 0)
+
+    int pressed = 0;
+
+    if (buttons[7] == 0)
     {                                           // Right
-        if ((*state).objects[0].loc.x + (*state).objects[0].speed <= (*state).width) 
+        if ((*state).dk.loc.x + (*state).dk.speed <= (*state).width) 
         // Ensure that DK does not step outside of screen
         {
-            if (/*checkCollision(1) != 1*/ 1)
+	    uart_puts("Right\n");
+	    pressed = 7;
+
+            if (1)
             { // Check if DK will collide with an Object
-                (*state).objects[0].loc.x += (*state).objects[0].speed;
-                (*state).objects[0].collision = 0;
+                (*state).dk.loc.x += (*state).dk.speed;
+                (*state).dk.collision = 0;
             }
             else
             {
-                (*state).objects[0].collision = 1;
-            }
-        }
-    }
-
-    else if (buttons[5] == 0)
-    {                                          // Left
-        if ((*state).objects[0].loc.x - (*state).objects[0].speed >= 0) 
-        // Ensure that DK does not step outside of screen
-        {
-            if (/*checkCollision(2) != 1*/ 1)
-            {
-                (*state).objects[0].loc.x -= (*state).objects[0].speed;
-                (*state).objects[0].collision = 0;
-            }
-            else
-            {
-                (*state).objects[0].collision = 1;
-            }
-        }
-    }
-
-    else if (buttons[7] == 0)
-    {                                          // Up
-        if ((*state).objects[0].loc.y - (*state).objects[0].speed >= 0) 
-        // Ensure that DK does not step outside of screen
-        {
-            if (/*checkCollision(3) != 1*/ 1)
-            {
-                (*state).objects[0].loc.y -= (*state).objects[0].speed;
-                (*state).objects[0].collision = 0;
-            }
-            else
-            {
-                (*state).objects[0].collision = 1;
+                (*state).dk.collision = 1;
             }
         }
     }
 
     else if (buttons[6] == 0)
-    {                                           // Down
-        if ((*state).objects[0].loc.y + (*state).objects[0].speed <= (*state).height) 
+    {                                          // Left
+        if ((*state).dk.loc.x - (*state).dk.speed >= 0) 
         // Ensure that DK does not step outside of screen
         {
-            if (/*checkCollision(4) != 1*/ 1)
+	    uart_puts("Left\n");
+	    pressed = 6;
+
+            if (1)
             {
-                (*state).objects[0].loc.y += (*state).objects[0].speed;
-                (*state).objects[0].collision = 0;
+                (*state).dk.loc.x -= (*state).dk.speed;
+                (*state).dk.collision = 0;
             }
             else
             {
-                (*state).objects[0].collision = 1;
+                (*state).dk.collision = 1;
             }
         }
     }
+
+    else if (buttons[4] == 0)
+    {                                          // Up
+        if ((*state).dk.loc.y - (*state).dk.speed >= 0) 
+        // Ensure that DK does not step outside of screen
+        {
+	    uart_puts("Up\n");
+	    pressed = 4;
+
+            if (1)
+            {
+                (*state).dk.loc.y -= (*state).dk.speed;
+                (*state).dk.collision = 0;
+            }
+            else
+            {
+                (*state).dk.collision = 1;
+            }
+        }
+    }
+
+    else if (buttons[5] == 0)
+    {                                           // Down
+        if ((*state).dk.loc.y + (*state).dk.speed <= (*state).height) 
+        // Ensure that DK does not step outside of screen
+        {
+	    uart_puts("Down\n");
+	    pressed = 5;
+
+            if (1)
+            {
+                (*state).dk.loc.y += (*state).dk.speed;
+                (*state).dk.collision = 0;
+            }
+            else
+            {
+                (*state).dk.collision = 1;
+            }
+        }
+    }
+
+    // If DK moved, he loses his immunity.
+    if (pressed > 0) (*state).dk.dk_immunity = 0;
+
+    // Wait for pressed joypad button to be unpressed before function can be exited
+    
+    while (pressed > 0) {
+	read_SNES(buttons);
+	if (buttons[pressed] == 1) pressed = 0;
+    }
+    uart_puts("Unpressed");
+
 }
 
 
@@ -547,15 +623,17 @@ void jump(struct gamestate *state_ptr, int *btns) {
 */
 
 
-// Randomly moves the passed object horizontally.
-// To simulate randomness, takes an int argument (will be time once that's figured out).
-void move_rand(struct object *ob_ptr, int time) {
-    if (time % 3 == 0) {
-        // Move right.
-        (*ob_ptr).loc.x += 1;
-    } else if (time % 3 == 1) {
-        // Move left.
-        (*ob_ptr).loc.x -= 1;
+// Moves enemy using enemy_direction.
+// If enemy is at the edge of the screen, flip enemy_direction.
+void move_enemy(struct object *ob_ptr, int width) {
+    if ((*ob_ptr).enemy_direction == 0) {
+	// Move left.
+	if ((*ob_ptr).loc.x - (*ob_ptr).speed >= 0) (*ob_ptr).loc.x -= (*ob_ptr).speed;
+	else (*ob_ptr).enemy_direction = 1;
+    } else {
+	// Move right.
+	if ((*ob_ptr).loc.x + (*ob_ptr).speed <= width) (*ob_ptr).loc.x += (*ob_ptr).speed;
+	else (*ob_ptr).enemy_direction = 0;	
     }
 }
 
@@ -634,55 +712,144 @@ state.score = 0;
 state.lives = 4;
 state.time = 1000;
 
+state.winflag = 0;
+state.loseflag = 0;
+
 // Background image for stage 1...
 
 state.background.img = dk_image.pixel_data;
 state.background.width = dk_image.width;
 state.background.height = dk_image.height;
 
-// Objects for stage 1... DK and an enemy...
-
-state.num_objects = 2;
+// Objects for stage 1... DK and an two enemies...
 
 // DK
 
-state.objects[0].sprite.img = dk_image.pixel_data;
-state.objects[0].sprite.width = dk_image.width;
-state.objects[0].sprite.height = dk_image.height;
+state.dk.sprite.img = dk_image.pixel_data;
+state.dk.sprite.width = dk_image.width;
+state.dk.sprite.height = dk_image.height;
 
-state.objects[0].collision = 0;
+state.dk.collision = 0;
 
-state.objects[0].loc.x = 50;
-state.objects[0].loc.y = 900;
+state.dk.loc.x = 2;
+state.dk.loc.y = 16;
 
-// Enemy
+state.dk.speed = 1;
+state.dk.dk_immunity = 0;
 
-state.objects[1].sprite.img = enemy_image.pixel_data;
-state.objects[1].sprite.width = enemy_image.width;
-state.objects[1].sprite.height = enemy_image.height;
+// Enemies
 
-state.objects[1].collision = 0;
+state.num_enemies = 2;
 
-state.objects[1].loc.x = 1000;
-state.objects[1].loc.y = 900;
+for (int i = 0; i < 2; ++i) {
+        state.enemies[i].sprite.img = enemy_image.pixel_data;
+        state.enemies[i].sprite.width = enemy_image.width;
+        state.enemies[i].sprite.height = enemy_image.height;
 
+        state.enemies[i].collision = 0;
+        state.enemies[i].speed = 1;
+        state.enemies[i].enemy_direction = 0;
+}
 
-// this loop will run while we're in the first stage - break if DK exits stage (moves off the screen?)
-while (1) {
+state.enemies[0].loc.x = 10;
+state.enemies[0].loc.y = 12;
 
+state.enemies[1].loc.x = 15;
+state.enemies[1].loc.y = 18;
+
+// Packs
+
+state.num_packs = 0;
+
+// Record time in microseconds when first stage began...
+int initial_time = *clo; 
+
+// this loop will run while we're in the first level - break if either win flag or lose flag is set.
+while (!state.winflag && !state.loseflag) {
+  
     // Read controller.
     read_SNES(buttons);
 
     // Move DK accordingly.
     DKmove(buttons, &state);
 
-    // Move enemies randomly - for now one enemy, done manually:
-    move_rand(&state.objects[1], 1);
+    // For now, enemies are stationary.
     
-    // Draw the game state...
-    draw_state(state);
+    // Check to see if DK has collided with an enemy. DK can only be hurt if his immunity is turned off.
+    if (!state.dk.dk_immunity){
+    for (int i = 0; i < state.num_enemies; ++i) {
+	if (state.dk.loc.x == state.enemies[i].loc.x && state.dk.loc.y == state.enemies[i].loc.y) {
+		--state.lives;
+		printf("Lost a life\n");
+		// Give DK immunity - he can't be hurt until he leaves this cell.
+		state.dk.dk_immunity = 1;
+		// Set lose flag if out of lives.
+		if (state.lives == 0) state.loseflag = 1;
+	}
+    }
+    }
+
+
+    // Check to see if DK has collided with a pack...
+
+
+
+    // Check to see if DK has reached the top of the screen (end of level)
+    if (state.dk.loc.y == 0) state.winflag = 1;
+
+
+    // Update time remaining... (this should work as long as clock register does not reset)
+    state.time = 1000 - ((*clo - initial_time)/1000);
+
+    // Draw the game state... (have to insert function body)
     
+    // First, draw background at the origin...
+    draw_image(state.background, 0, 0);
+    
+    // Draw DK...
+    draw_image(state.dk.sprite, state.dk.loc.x * (SCREENWIDTH / state.width), state.dk.loc.y * (SCREENHEIGHT / state.height));
+    
+    // Draw each enemy...
+    for (int i = 0; i < state.num_enemies; ++i) {
+        // Print state.enemies[i] with grid coords (x, y) at location (x * SCREENWIDTH/state.width, y * SCREENHEIGHT/state.height)
+        draw_image(state.enemies[i].sprite, state.enemies[i].loc.x * (SCREENWIDTH / state.width), state.enemies[i].loc.y * (SCREENHEIGHT / state.height));
+    }
+    
+    // Draw each pack...
+    for (int i = 0; i < state.num_packs; ++i) {
+        // Print state.packs[i] with grid coords (x, y) at location (x * SCREENWIDTH/state.width, y * SCREENHEIGHT/state.height)
+        draw_image(state.packs[i].sprite, state.packs[i].loc.x * (SCREENWIDTH / state.width), state.packs[i].loc.y * (SCREENHEIGHT / state.height));
+    }
+    
+    // Print score...
+    draw_int(state.score, SCREENWIDTH, FONT_HEIGHT, 0xF);
+    drawString(SCREENWIDTH - 200, FONT_HEIGHT, "SCORE:", 0xF);
+
+    // Print time remaining...
+    draw_int(state.time, SCREENWIDTH, 2*FONT_HEIGHT, 0xF);
+    drawString(SCREENWIDTH - 200, 2*FONT_HEIGHT, "TIME:", 0xF);
+
+    // Print lives remaining... (replace with hearts later)    
+    draw_int(state.lives, SCREENWIDTH, 3*FONT_HEIGHT, 0xF);
+    drawString(SCREENWIDTH - 200, 3*FONT_HEIGHT, "LIVES:", 0xF);    
+
+    // End of drawing game state.
 }
+
+// First stage exited. If lost, print game over. If won, move on to next stage.
+
+if (state.loseflag) {
+    drawString(500, 500, "Game over!", 0xF);
+    state.loseflag = 0;
+    // TO-DO: Add goto menu here.
+    return 1;
+}
+
+// First stage won! Move on to next stage...
+
+drawString(500, 500, "First stage won!", 0xF);
+state.winflag = 0;
+
 
 return 1;
 
