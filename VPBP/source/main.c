@@ -7,6 +7,7 @@
 #include "enemy.h"
 #include "coin.h"
 #include "health.h"
+#include "black.h"
 
 #define MAXOBJECTS 30
 #define SCREENWIDTH 1888
@@ -186,6 +187,7 @@ struct object
     int health_pack;
     int point_pack;
 
+    int pack_exists;	// Set to 0 when DK collides with a pack.
 };
 
 
@@ -254,6 +256,10 @@ void draw_image(struct image myimg, int offx, int offy) {
     myDrawImage(myimg.img, myimg.width, myimg.height, offx, offy);
 }
 
+// Draws an image structure at specified GRID offsets.
+void draw_grid(struct image myimg, int x, int y, struct gamestate s) {
+    draw_image(myimg, x * (SCREENWIDTH / s.width), y * (SCREENHEIGHT / s.height));
+}
 
 // Main drawing method - draws a game state.
 // Coordinates of all objects are in grid coords, so need to convert these to pixel
@@ -275,7 +281,8 @@ void draw_state(struct gamestate state) {
     // Draw each pack...
     for (int i = 0; i < state.num_packs; ++i) {
         // Print state.packs[i] with grid coords (x, y) at location (x * SCREENWIDTH/state.width, y * SCREENHEIGHT/state.height)
-        draw_image(state.packs[i].sprite, state.packs[i].loc.x * (SCREENWIDTH / state.width), state.packs[i].loc.y * (SCREENHEIGHT / state.height));
+        if (state.packs[i].pack_exists) 
+		draw_image(state.packs[i].sprite, state.packs[i].loc.x * (SCREENWIDTH / state.width), state.packs[i].loc.y * (SCREENHEIGHT / state.height));
     }
 
     // Print score...
@@ -402,81 +409,41 @@ void DKmove(int *buttons, struct gamestate *state)
 
     if (buttons[7] == 0)
     {                                           // Right
-        if ((*state).dk.loc.x + (*state).dk.speed <= (*state).width) 
-        // Ensure that DK does not step outside of screen
-        {
-	    uart_puts("Right\n");
-	    pressed = 7;
-
-            if (1)
-            { // Check if DK will collide with an Object
-                (*state).dk.loc.x += (*state).dk.speed;
-                (*state).dk.collision = 0;
-            }
-            else
-            {
-                (*state).dk.collision = 1;
-            }
+        if ((*state).dk.loc.x + (*state).dk.speed <= (*state).width) {
+            // Ensure that DK does not step outside of screen
+	        uart_puts("Right\n");
+	        pressed = 7;
+            (*state).dk.loc.x += (*state).dk.speed;
         }
     }
 
     else if (buttons[6] == 0)
     {                                          // Left
-        if ((*state).dk.loc.x - (*state).dk.speed >= 0) 
-        // Ensure that DK does not step outside of screen
-        {
-	    uart_puts("Left\n");
-	    pressed = 6;
-
-            if (1)
-            {
-                (*state).dk.loc.x -= (*state).dk.speed;
-                (*state).dk.collision = 0;
-            }
-            else
-            {
-                (*state).dk.collision = 1;
-            }
+        if ((*state).dk.loc.x - (*state).dk.speed >= 0) {
+            // Ensure that DK does not step outside of screen
+	        uart_puts("Left\n");
+	        pressed = 6;
+            (*state).dk.loc.x -= (*state).dk.speed;
         }
     }
 
     else if (buttons[4] == 0)
     {                                          // Up
-        if ((*state).dk.loc.y - (*state).dk.speed >= 0) 
-        // Ensure that DK does not step outside of screen
-        {
-	    uart_puts("Up\n");
-	    pressed = 4;
-
-            if (1)
-            {
-                (*state).dk.loc.y -= (*state).dk.speed;
-                (*state).dk.collision = 0;
-            }
-            else
-            {
-                (*state).dk.collision = 1;
-            }
+        if ((*state).dk.loc.y - (*state).dk.speed >= 0) {
+            // Ensure that DK does not step outside of screen
+	        uart_puts("Up\n");
+	        pressed = 4;
+            (*state).dk.loc.y -= (*state).dk.speed;
         }
     }
 
     else if (buttons[5] == 0)
     {                                           // Down
-        if ((*state).dk.loc.y + (*state).dk.speed <= (*state).height) 
-        // Ensure that DK does not step outside of screen
-        {
-	    uart_puts("Down\n");
-	    pressed = 5;
-
-            if (1)
-            {
-                (*state).dk.loc.y += (*state).dk.speed;
-                (*state).dk.collision = 0;
-            }
-            else
-            {
-                (*state).dk.collision = 1;
-            }
+        if ((*state).dk.loc.y + (*state).dk.speed <= (*state).height) {
+            // Ensure that DK does not step outside of screen
+	        uart_puts("Down\n");
+	        pressed = 5;
+            (*state).dk.loc.y += (*state).dk.speed;
         }
     }
 
@@ -701,7 +668,6 @@ if (start_flag == -1) {
 drawString(400, 400, "Starting game...", 0xF);
 printf("Starting game...\n");
 
-
 /////////////////
 // FIRST STAGE //
 /////////////////
@@ -722,9 +688,9 @@ state.loseflag = 0;
 
 // Background image for stage 1...
 
-state.background.img = dk_image.pixel_data;
-state.background.width = dk_image.width;
-state.background.height = dk_image.height;
+state.background.img = black_image.pixel_data;
+state.background.width = black_image.width;
+state.background.height = black_image.height;
 
 // Objects for stage 1...
 
@@ -772,6 +738,7 @@ for (int i = 0; i < 1; ++i) {
 
     state.packs[i].health_pack = 1;
     state.packs[i].point_pack = 0;
+    state.packs[i].pack_exists = 1;
 }
 
 state.packs[0].loc.x = 14;
@@ -786,6 +753,7 @@ for (int i = 1; i < 2; ++i) {
 
     state.packs[i].health_pack = 0;
     state.packs[i].point_pack = 1;
+    state.packs[i].pack_exists = 1;
 }
 
 state.packs[1].loc.x = 3;
@@ -821,9 +789,8 @@ while (!state.winflag && !state.loseflag) {
 
 
     // Check to see if DK has collided with a pack...
-
     for (int i = 0; i < state.num_packs; ++i) {
-        if (state.dk.loc.x == state.packs[i].loc.x && state.dk.loc.y == state.packs[i].loc.y) {
+        if (state.dk.loc.x == state.packs[i].loc.x && state.dk.loc.y == state.packs[i].loc.y && state.packs[i].pack_exists) {
             // See which kind of pack DK has collided with, update gamestate accordingly.
             if (state.packs[i].health_pack) {
                 // Give DK an extra life if he has less than 4.
@@ -832,15 +799,19 @@ while (!state.winflag && !state.loseflag) {
                 // Give DK 1000 points.
                 state.score += 1000;
             }
+	    // Remove pack from stage.
+	    state.packs[i].pack_exists = 0;
         }
     }
 
     // Check to see if DK has reached the top of the screen (end of level)
     if (state.dk.loc.y == 0) state.winflag = 1;
 
-
     // Update time remaining... (this should work as long as clock register does not reset)
     state.time = 1000 - ((*clo - initial_time)/1000);
+
+    // Before drawing game state, erase old drawing of DK...
+    draw_grid(state.background, state.dk.loc.x, state.dk.loc.y, state);
 
     // Draw the game state... (have to insert function body)
     
@@ -859,7 +830,8 @@ while (!state.winflag && !state.loseflag) {
     // Draw each pack...
     for (int i = 0; i < state.num_packs; ++i) {
         // Print state.packs[i] with grid coords (x, y) at location (x * SCREENWIDTH/state.width, y * SCREENHEIGHT/state.height)
-        draw_image(state.packs[i].sprite, state.packs[i].loc.x * (SCREENWIDTH / state.width), state.packs[i].loc.y * (SCREENHEIGHT / state.height));
+        if (state.packs[i].pack_exists)
+	       draw_image(state.packs[i].sprite, state.packs[i].loc.x * (SCREENWIDTH / state.width), state.packs[i].loc.y * (SCREENHEIGHT / state.height));
     }
     
     // Print score...
