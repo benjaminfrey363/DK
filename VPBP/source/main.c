@@ -174,6 +174,8 @@ struct object
 {
     struct image sprite;        // sprite.
     struct coord loc;           // Coordinate location.
+    
+    // Speed variable for moving objects.
     int speed;
 
     // enemy_direction determines which direction moving enemies will walk.
@@ -187,7 +189,8 @@ struct object
     int health_pack;
     int point_pack;
 
-    int pack_exists;	// Set to 0 when DK collides with a pack.
+    // Boolean used for packs and exits, removes them from the map after DK collides with them.
+    int exists;
 };
 
 
@@ -212,12 +215,14 @@ struct gamestate
     int num_packs;          // Actual # of packs in world.
     
     // Also track dk.
-    
     struct object dk;
 
     // Flags.
     int winflag;
     int loseflag;
+    
+    // Exit structure - DK colliding with exit causes win flag to be set.
+    struct object exit;
 };
 
 struct startMenu {
@@ -281,7 +286,7 @@ void draw_state(struct gamestate state) {
     // Draw each pack...
     for (int i = 0; i < state.num_packs; ++i) {
         // Print state.packs[i] with grid coords (x, y) at location (x * SCREENWIDTH/state.width, y * SCREENHEIGHT/state.height)
-        if (state.packs[i].pack_exists) 
+        if (state.packs[i].exists) 
 		draw_image(state.packs[i].sprite, state.packs[i].loc.x * (SCREENWIDTH / state.width), state.packs[i].loc.y * (SCREENHEIGHT / state.height));
     }
 
@@ -299,22 +304,55 @@ void draw_state(struct gamestate state) {
 }
 
 
+// Clear every object on the screeen using the eraser image.
+void clear_screen(struct gamestate state, struct image eraser) {
+    // Erase DK...
+    draw_image(eraser, state.dk.loc.x * (SCREENWIDTH/state.width), state.dk.loc.y * (SCREENHEIGHT/state.height));
+    
+    // Erase each enemy...
+    for (int i = 0; i < state.num_enemies; ++i) {
+        draw_image(eraser, state.enemies[i].loc.x * (SCREENWIDTH/state.width), state.enemies[i].loc.y * (SCREENHEIGHT/state.height));
+    }
+    
+    // Erase each pack...
+    for (int i = 0; i < state.num_packs; ++i) {
+        draw_image(eraser, state.packs[i].loc.x * (SCREENWIDTH/state.width), state.packs[i].loc.y * (SCREENHEIGHT/state.height));
+    }
+}
+
+
+// Print black at every cell of the gamestate.
+void black_screen(struct gamestate state) {
+    for (int i = 0; i < state.width; ++i) {
+        for (int j = 0; j < state.height; ++j) {
+            myDrawImage(black_image.pixel_data, black_image.width, black_image.height, i * (SCREENWIDTH / state.width), j * (SCREENWIDTH / state.height));
+        }
+    }
+}
+
+
+//////////////////////////////////////////
+// START MENU / LEVEL SELECTION METHODS //
+//////////////////////////////////////////
+
 /*
 * Start Menu option selection logic. Can either select "Start" or "Quit" in initial menu.
 * Returns 1 if start is selected, -1 if quit is selected, and 0 if nothing has been selected.
 */
 int startMenuSelectOption(int *buttons, struct startMenu *start){
     if(buttons[4] ==  0){
-        // JP Up pressed - move to "start"
+        // JP Up pressed - move to "start" and erase current quit game string...
         (*start).startGameSelected = 1;
         (*start).quitGameSelected = 0;
         //Hover feature on "Start" Button
+        drawString(300, 350, "             ", 0xF);     // Erase "-> QUIT GAME"
     }
     else if(buttons[5] ==  0){
-        // JP Down pressed - move to "quit" button
+        // JP Down pressed - move to "quit" button and erase current start game string...
         (*start).startGameSelected = 0;
         (*start).quitGameSelected = 1;
         //Hover feature on "Quit" Button
+        drawString(300, 300, "              ", 0xF);    // Erase "-> START GAME"
     }
 
     if(buttons[8] == 0){
@@ -406,6 +444,10 @@ void DKmove(int *buttons, struct gamestate *state)
 {
 
     int pressed = 0;
+    
+    // Record old coordinates so that background can be drawn there.
+    int oldx = (*state).dk.loc.x;
+    int oldy = (*state).dk.loc.y;
 
     if (buttons[7] == 0)
     {                                           // Right
@@ -447,8 +489,17 @@ void DKmove(int *buttons, struct gamestate *state)
         }
     }
 
-    // If DK moved, he loses his immunity.
-    if (pressed > 0) (*state).dk.dk_immunity = 0;
+    // If DK moved, he loses his immunity and we redraw the background at his old location.
+    // If DK hasn't moved we don't redraw the background - this is to prevent DK from fading
+    // in and out of black.
+    if (pressed > 0) {
+        (*state).dk.dk_immunity = 0;
+        draw_image((*state).background, oldx * (SCREENWIDTH / (*state).width), oldy * (SCREENHEIGHT / (*state).height));
+    }
+    
+    // Draw DK at his new location...
+    
+    draw_image((*state).dk.sprite, (*state).dk.loc.x * (SCREENWIDTH / (*state).width), (*state).dk.loc.y * (SCREENHEIGHT / (*state).height));
 
     // Wait for pressed joypad button to be unpressed before function can be exited
     
@@ -634,6 +685,15 @@ for (int i = 0; i < 16; ++i) buttons[i] = 1;
 init_snes_lines();
 fb_init();
 
+/*
+// Clear the screen before we begin...
+for (int i = 0; i < state.width; ++i) {
+    for (int j = 0; j < state.height; ++j) {
+        myDrawImage(black_image.pixel_data, black_image.width, black_image.height, i * (SCREENWIDTH / state.width), j * (SCREENWIDTH / state.height));
+    }
+}
+*/
+
 /////////////////////////////////
 // START MENU - BASICALLY DONE //
 /////////////////////////////////
@@ -655,18 +715,27 @@ while (start_flag == 0) {
     // A on either start or quit option.
     read_SNES(buttons);
     // Pass address of sm so that flag attributes can be modified by function.
+    // Function will automatically erase text when selection moves up/down.
     start_flag = startMenuSelectOption(buttons, &sm);
 }
+
+// Erase selection menu from screen...
+drawString(300, 300, "              ", 0xF);
+drawString(300, 350, "              ", 0xF);
 
 if (start_flag == -1) {
     // Quit game...
     drawString(400, 400, "Exiting game...", 0xF);
     printf("Quitting game...\n");
+    wait(1000000);
+    drawString(400, 400, "                ", 0xF);      // Erase message from screen.
     return 1;
 }
 
 drawString(400, 400, "Starting game...", 0xF);
 printf("Starting game...\n");
+wait(1000000);
+drawString(400, 400, "                 ", 0xF);         // Erase message from screen.
 
 /////////////////
 // FIRST STAGE //
@@ -738,7 +807,7 @@ for (int i = 0; i < 1; ++i) {
 
     state.packs[i].health_pack = 1;
     state.packs[i].point_pack = 0;
-    state.packs[i].pack_exists = 1;
+    state.packs[i].exists = 1;
 }
 
 state.packs[0].loc.x = 14;
@@ -753,11 +822,21 @@ for (int i = 1; i < 2; ++i) {
 
     state.packs[i].health_pack = 0;
     state.packs[i].point_pack = 1;
-    state.packs[i].pack_exists = 1;
+    state.packs[i].exists = 1;
 }
 
 state.packs[1].loc.x = 3;
 state.packs[1].loc.y = 4;
+
+// Set up exit... (temporarily using coin image)
+state.exit.sprite.img = coin_image.pixel_data;
+state.exit.sprite.width = coin_image.width;
+state.exit.sprite.height = coin_image.height;
+
+// Exit for first stage will be located at coords (5, 0), middle of top of screen...
+state.exit.loc.x = 5;
+state.exit.loc.y = 0;
+state.exit.exists = 1;
 
 // Record time in microseconds when first stage began...
 int initial_time = *clo; 
@@ -767,6 +846,10 @@ while (!state.winflag && !state.loseflag) {
   
     // Read controller.
     read_SNES(buttons);
+    
+    // GOT RID OF THIS - BACKGROUND IS NOW DRAWN IN DKmove. IMPROVES GRAPHICS
+    // Erase old drawing of DK before moving him...
+    // draw_image(state.background, state.dk.loc.x * (SCREENWIDTH / state.width), state.dk.loc.y * (SCREENHEIGHT / state.height));
 
     // Move DK accordingly.
     DKmove(buttons, &state);
@@ -790,7 +873,7 @@ while (!state.winflag && !state.loseflag) {
 
     // Check to see if DK has collided with a pack...
     for (int i = 0; i < state.num_packs; ++i) {
-        if (state.dk.loc.x == state.packs[i].loc.x && state.dk.loc.y == state.packs[i].loc.y && state.packs[i].pack_exists) {
+        if (state.dk.loc.x == state.packs[i].loc.x && state.dk.loc.y == state.packs[i].loc.y && state.packs[i].exists) {
             // See which kind of pack DK has collided with, update gamestate accordingly.
             if (state.packs[i].health_pack) {
                 // Give DK an extra life if he has less than 4.
@@ -800,26 +883,24 @@ while (!state.winflag && !state.loseflag) {
                 state.score += 1000;
             }
 	    // Remove pack from stage.
-	    state.packs[i].pack_exists = 0;
+	    state.packs[i].exists = 0;
         }
     }
 
-    // Check to see if DK has reached the top of the screen (end of level)
-    if (state.dk.loc.y == 0) state.winflag = 1;
+    // Check to see if DK has reached the exit, set winflag if he has...
+    if (state.dk.loc.x == state.exit.loc.x && state.dk.loc.y == state.exit.loc.y) {
+        state.winflag = 1;
+        state.exit.exists = 0;
+    }
 
     // Update time remaining... (this should work as long as clock register does not reset)
     state.time = 1000 - ((*clo - initial_time)/1000);
 
-    // Before drawing game state, erase old drawing of DK...
-    draw_image(state.background, state.dk.loc.x * (SCREENWIDTH / state.width), state.dk.loc.y * (SCREENHEIGHT / state.height));
-
     // Draw the game state... (have to insert function body)
     
-    // First, draw background at the origin...
-    draw_image(state.background, 0, 0);
-    
+    // Drawing of DK moved to DKmove - stops DK from disappearing when a button is held down.
     // Draw DK...
-    draw_image(state.dk.sprite, state.dk.loc.x * (SCREENWIDTH / state.width), state.dk.loc.y * (SCREENHEIGHT / state.height));
+    // draw_image(state.dk.sprite, state.dk.loc.x * (SCREENWIDTH / state.width), state.dk.loc.y * (SCREENHEIGHT / state.height));
     
     // Draw each enemy...
     for (int i = 0; i < state.num_enemies; ++i) {
@@ -830,9 +911,12 @@ while (!state.winflag && !state.loseflag) {
     // Draw each pack...
     for (int i = 0; i < state.num_packs; ++i) {
         // Print state.packs[i] with grid coords (x, y) at location (x * SCREENWIDTH/state.width, y * SCREENHEIGHT/state.height)
-        if (state.packs[i].pack_exists)
+        if (state.packs[i].exists)
 	       draw_image(state.packs[i].sprite, state.packs[i].loc.x * (SCREENWIDTH / state.width), state.packs[i].loc.y * (SCREENHEIGHT / state.height));
     }
+    
+    // Draw the exit...
+    draw_image(state.exit.sprite, state.exit.loc.x * (SCREENWIDTH / state.width), state.exit.loc.y * (SCREENHEIGHT / state.height));
     
     // Print score...
     draw_int(state.score, SCREENWIDTH, FONT_HEIGHT, 0xF);
@@ -849,18 +933,60 @@ while (!state.winflag && !state.loseflag) {
     // End of drawing game state.
 }
 
-// First stage exited. If lost, print game over. If won, move on to next stage.
+// First stage exited...
 
+// Before doing anything else, clear the screen... (memcpy error when I try to call function, body copied here instead...)
+    // Erase DK...
+    draw_image(state.background, state.dk.loc.x * (SCREENWIDTH/state.width), state.dk.loc.y * (SCREENHEIGHT/state.height));
+    
+    // Erase each enemy...
+    for (int i = 0; i < state.num_enemies; ++i) {
+        draw_image(state.background, state.enemies[i].loc.x * (SCREENWIDTH/state.width), state.enemies[i].loc.y * (SCREENHEIGHT/state.height));
+    }
+    
+    // Erase each pack...
+    for (int i = 0; i < state.num_packs; ++i) {
+        draw_image(state.background, state.packs[i].loc.x * (SCREENWIDTH/state.width), state.packs[i].loc.y * (SCREENHEIGHT/state.height));
+    }
+
+// If lost, print game over and exit.
 if (state.loseflag) {
     drawString(500, 500, "Game over!", 0xF);
+    wait(1000000);
+    drawString(500, 500, "           ", 0xF);
+    
+    // Copyable code to erase score/time/lives counters (functions which call drawString aren't working, so I can't make this into a function):
+
+    // Erase time, score, lives before terminating...
+    drawString(SCREENWIDTH - 200, FONT_HEIGHT, "       ", 0xF);         // Erase "SCORE:"
+    drawString(SCREENWIDTH - 200, 2*FONT_HEIGHT, "      ", 0xF);        // Erase "TIME:"
+    drawString(SCREENWIDTH - 200, 3*FONT_HEIGHT, "       ", 0xF);       // ERASE "LIVES:"
+    
+    // Erase numbers (big buffer used, during testing time counter has been holding some crazy values):
+    drawString(SCREENWIDTH - 100, FONT_HEIGHT, "                        ", 0xF);
+    drawString(SCREENWIDTH - 100, 2*FONT_HEIGHT, "                        ", 0xF);
+    drawString(SCREENWIDTH - 100, 3*FONT_HEIGHT, "                        ", 0xF);
+
     state.loseflag = 0;
-    // TO-DO: Add goto menu here.
+    // TO-DO: Add goto menu here, maybe
     return 1;
 }
 
-// First stage won! Move on to next stage...
+// If we didn't enter that code block, first stage won! Move on to next stage, but first erase score/times/lives...
+
+// Erase time, score, lives before terminating...
+drawString(SCREENWIDTH - 200, FONT_HEIGHT, "       ", 0xF);         // Erase "SCORE:"
+drawString(SCREENWIDTH - 200, 2*FONT_HEIGHT, "      ", 0xF);        // Erase "TIME:"
+drawString(SCREENWIDTH - 200, 3*FONT_HEIGHT, "       ", 0xF);       // ERASE "LIVES:"
+    
+// Erase numbers (big buffer used, during testing time counter has been holding some crazy values):
+drawString(SCREENWIDTH - 100, FONT_HEIGHT, "                        ", 0xF);
+drawString(SCREENWIDTH - 100, 2*FONT_HEIGHT, "                        ", 0xF);
+drawString(SCREENWIDTH - 100, 3*FONT_HEIGHT, "                        ", 0xF);
 
 drawString(500, 500, "First stage won!", 0xF);
+wait(1000000);
+drawString(500, 500, "                 ", 0xF);
 state.winflag = 0;
 
 
