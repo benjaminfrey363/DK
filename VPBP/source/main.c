@@ -172,6 +172,8 @@ struct coord
 // with another object (not used yet), and a coordinate.
 struct object
 {
+    // The fundamental traits of an object are a sprite and a location, all other
+    // variables are used by different extensions of an object.
     struct image sprite;        // sprite.
     struct coord loc;           // Coordinate location.
     
@@ -194,6 +196,17 @@ struct object
 };
 
 
+// Vehicle structure - effectively teleports DK between cells.
+struct vehicle
+{
+    struct object start;
+    struct object finish;
+    
+    // Boolean indicating whether vehicle can be traversed finish -> start as well.
+    int bidirectional;
+};
+
+
 // Gamestate structure
 struct gamestate
 {
@@ -211,8 +224,13 @@ struct gamestate
     struct object enemies[MAXOBJECTS];
     int num_enemies;        // Actual # of enemies in world.
 
+    // Tracks an array of packs as well.
     struct object packs[MAXOBJECTS];
     int num_packs;          // Actual # of packs in world.
+    
+    // Also tracks an array of vehicles.
+    struct vehicle vehicles[MAXOBJECTS];
+    int num_vehicles;
     
     // Also track dk.
     struct object dk;
@@ -289,6 +307,14 @@ void draw_state(struct gamestate state) {
         if (state.packs[i].exists) 
 		draw_image(state.packs[i].sprite, state.packs[i].loc.x * (SCREENWIDTH / state.width), state.packs[i].loc.y * (SCREENHEIGHT / state.height));
     }
+    
+    // Draw each vehicle...
+    for (int i = 0; i < state.num_vehicles; ++i) {
+        // Draw start...
+        draw_image(state.vehicles[i].start.sprite, state.vehicles[i].start.loc.x * (SCREENWIDTH / state.width), state.vehicles[i].start.loc.y * (SCREENHEIGHT / state.height));
+        // Draw finish...
+        draw_image(state.vehicles[i].finish.sprite, state.vehicles[i].finish.loc.x * (SCREENWIDTH / state.width), state.vehicles[i].finish.loc.y * (SCREENHEIGHT / state.height));
+    }
 
     // Print score...
     draw_int(state.score, SCREENWIDTH, FONT_HEIGHT, 0xF);
@@ -317,6 +343,12 @@ void clear_screen(struct gamestate state, struct image eraser) {
     // Erase each pack...
     for (int i = 0; i < state.num_packs; ++i) {
         draw_image(eraser, state.packs[i].loc.x * (SCREENWIDTH/state.width), state.packs[i].loc.y * (SCREENHEIGHT/state.height));
+    }
+    
+    // Erase each vehicle...
+    for (int i = 0; i < state.num_vehicles; ++i) {
+        draw_image(eraser, state.vehicles[i].start.loc.x * (SCREENWIDTH/state.width), state.vehicles[i].start.loc.y * (SCREENHEIGHT/state.height));
+        draw_image(eraser, state.vehicles[i].finish.loc.x * (SCREENWIDTH/state.width), state.vehicles[i].finish.loc.y * (SCREENHEIGHT/state.height));
     }
 }
 
@@ -502,10 +534,22 @@ void DKmove(int *buttons, struct gamestate *state)
     draw_image((*state).dk.sprite, (*state).dk.loc.x * (SCREENWIDTH / (*state).width), (*state).dk.loc.y * (SCREENHEIGHT / (*state).height));
 
     // Wait for pressed joypad button to be unpressed before function can be exited
+    // Time and score will continue to be updated while we're in this loop so that these values are not paused when Jpad is held down.
+    
+    unsigned int initial_time = *clo;
     
     while (pressed > 0) {
 	read_SNES(buttons);
 	if (buttons[pressed] == 1) pressed = 0;
+	initial_time = ((*clo - initial_time) / 1000) + 1;              // initial_time is time elapsed in thousandths of a second.
+        // 1 is added to initial_time in case iterations of this loop are short enough that *clo - initial_time < 1000
+        (*state).time -= initial_time;
+        
+        initial_time = *clo;    // Setting of initial_time is put here as printing to screen is the most time-consuming part of this loop.
+        
+        // Print updated time to screen...
+        draw_int((*state).time, SCREENWIDTH, 2*FONT_HEIGHT, 0xF);
+        // drawString(SCREENWIDTH - 200, 2*FONT_HEIGHT, "TIME:", 0xF);
     }
     uart_puts("Unpressed");
 
@@ -750,7 +794,7 @@ state.height = 20;
 
 state.score = 0;
 state.lives = 4;
-state.time = 1000;
+state.time = 1000000;           // Display time in thousandths of a second
 
 state.winflag = 0;
 state.loseflag = 0;
@@ -828,6 +872,46 @@ for (int i = 1; i < 2; ++i) {
 state.packs[1].loc.x = 3;
 state.packs[1].loc.y = 4;
 
+// Vehicles...
+
+state.num_vehicles = 2;
+
+// First vehicle... maybe a vine? For now using health pack image.
+// This one will be unidirectional...
+state.vehicles[0].start.sprite.img = health_image.pixel_data;
+state.vehicles[0].start.sprite.width = health_image.width;
+state.vehicles[0].start.sprite.height = health_image.height;
+state.vehicles[0].finish.sprite.img = health_image.pixel_data;
+state.vehicles[0].finish.sprite.width = health_image.width;
+state.vehicles[0].finish.sprite.height = health_image.height;
+
+state.vehicles[0].start.loc.x = 1;
+state.vehicles[0].start.loc.y = 2;
+
+state.vehicles[0].finish.loc.x = 1;
+state.vehicles[0].finish.loc.y = 5;
+
+state.vehicles[0].bidirectional = 0;
+
+// Second vehicle... maybe a boat/jeep? For now using health pack image.
+// This one will be bidirectional...
+state.vehicles[1].start.sprite.img = health_image.pixel_data;
+state.vehicles[1].start.sprite.width = health_image.width;
+state.vehicles[1].start.sprite.height = health_image.height;
+state.vehicles[1].finish.sprite.img = health_image.pixel_data;
+state.vehicles[1].finish.sprite.width = health_image.width;
+state.vehicles[1].finish.sprite.height = health_image.height;
+
+state.vehicles[1].start.loc.x = 1;
+state.vehicles[1].start.loc.y = 7;
+
+state.vehicles[1].finish.loc.x = 1;
+state.vehicles[1].finish.loc.y = 12;
+
+state.vehicles[1].bidirectional = 1;
+
+// Exit...
+
 // Set up exit... (temporarily using coin image)
 state.exit.sprite.img = coin_image.pixel_data;
 state.exit.sprite.width = coin_image.width;
@@ -838,11 +922,18 @@ state.exit.loc.x = 5;
 state.exit.loc.y = 0;
 state.exit.exists = 1;
 
-// Record time in microseconds when first stage began...
-int initial_time = *clo; 
+//////////////////////
+// FIRST STAGE LOOP //
+//////////////////////
+
+unsigned int time0;
 
 // this loop will run while we're in the first level - break if either win flag or lose flag is set.
 while (!state.winflag && !state.loseflag) {
+
+    // Record clock register contents so that we can calculate the time elapsed by each iteration of this loop,
+    // then subtract that from the amount of time remaining.
+    time0 = *clo;
   
     // Read controller.
     read_SNES(buttons);
@@ -886,15 +977,47 @@ while (!state.winflag && !state.loseflag) {
 	    state.packs[i].exists = 0;
         }
     }
+    
+    
+    // Check to see if DK has collided with a vehicle...
+    // To prevent DK from teleporting back and forth using bidirectional vehicles, set dk_immunity after DK teleports.
+    // dk_immunity won't be turned off until DK moves from the vehicle cell.
+    if (!state.dk.dk_immunity) {
+    for (int i = 0; i < state.num_vehicles; ++i) {
+    
+        // Check for collision with start...
+        if (state.dk.loc.x == state.vehicles[i].start.loc.x && state.dk.loc.y == state.vehicles[i].start.loc.y) {
+            
+            // TO-DO: Insert vehicle animations (vine swinging, etc) if we have the time and ability
+            
+            // Update location of DK to finish location of vehicle...
+            state.dk.loc.x = state.vehicles[i].finish.loc.x;
+            state.dk.loc.y = state.vehicles[i].finish.loc.y;
+            
+            state.dk.dk_immunity = 1;           // Set immunity.
+        }
+        
+        // Check for collision with finish (only teleports DK if vehicle is bidirectional)
+        // Added else to this conditional so that DK cannot teleport start -> finish and then immediately finish -> start using a bidirectional vehicle.
+        else if (state.dk.loc.x == state.vehicles[i].finish.loc.x && state.dk.loc.y == state.vehicles[i].finish.loc.y && state.vehicles[i].bidirectional) {
+        
+            // TO-DO: Insert vehicle animations if we have time and ability.
+        
+            // Update location of DK to start location of vehicle...
+            state.dk.loc.x = state.vehicles[i].start.loc.x;
+            state.dk.loc.y = state.vehicles[i].start.loc.y;
+            
+            state.dk.dk_immunity = 1;           // Set immunity.
+        }
+        
+    }
+    }
 
     // Check to see if DK has reached the exit, set winflag if he has...
     if (state.dk.loc.x == state.exit.loc.x && state.dk.loc.y == state.exit.loc.y) {
         state.winflag = 1;
         state.exit.exists = 0;
     }
-
-    // Update time remaining... (this should work as long as clock register does not reset)
-    state.time = 1000 - ((*clo - initial_time)/1000);
 
     // Draw the game state... (have to insert function body)
     
@@ -915,6 +1038,14 @@ while (!state.winflag && !state.loseflag) {
 	       draw_image(state.packs[i].sprite, state.packs[i].loc.x * (SCREENWIDTH / state.width), state.packs[i].loc.y * (SCREENHEIGHT / state.height));
     }
     
+    // Draw each vehicle...
+    for (int i = 0; i < state.num_vehicles; ++i) {
+        // Draw start...
+        draw_image(state.vehicles[i].start.sprite, state.vehicles[i].start.loc.x * (SCREENWIDTH / state.width), state.vehicles[i].start.loc.y * (SCREENHEIGHT / state.height));
+        // Draw finish...
+        draw_image(state.vehicles[i].finish.sprite, state.vehicles[i].finish.loc.x * (SCREENWIDTH / state.width), state.vehicles[i].finish.loc.y * (SCREENHEIGHT / state.height));
+    }
+    
     // Draw the exit...
     draw_image(state.exit.sprite, state.exit.loc.x * (SCREENWIDTH / state.width), state.exit.loc.y * (SCREENHEIGHT / state.height));
     
@@ -922,7 +1053,15 @@ while (!state.winflag && !state.loseflag) {
     draw_int(state.score, SCREENWIDTH, FONT_HEIGHT, 0xF);
     drawString(SCREENWIDTH - 200, FONT_HEIGHT, "SCORE:", 0xF);
 
-    // Print time remaining...
+    // Update and print time remaining...
+    
+    // First calculate time elapsed by this iteration of loop.
+    time0 = (*clo - time0) / 1000;              // time0 is time elapsed in thousandths of a second.
+    state.time -= time0;
+    
+    // If state.time is now leq 0, set loseflag.
+    if (state.time <= 0) state.loseflag = 1;
+    
     draw_int(state.time, SCREENWIDTH, 2*FONT_HEIGHT, 0xF);
     drawString(SCREENWIDTH - 200, 2*FONT_HEIGHT, "TIME:", 0xF);
 
@@ -947,6 +1086,12 @@ while (!state.winflag && !state.loseflag) {
     // Erase each pack...
     for (int i = 0; i < state.num_packs; ++i) {
         draw_image(state.background, state.packs[i].loc.x * (SCREENWIDTH/state.width), state.packs[i].loc.y * (SCREENHEIGHT/state.height));
+    }
+    
+    // Erase each vehicle...
+    for (int i = 0; i < state.num_vehicles; ++i) {
+        draw_image(state.background, state.vehicles[i].start.loc.x * (SCREENWIDTH/state.width), state.vehicles[i].start.loc.y * (SCREENHEIGHT/state.height));
+        draw_image(state.background, state.vehicles[i].finish.loc.x * (SCREENWIDTH/state.width), state.vehicles[i].finish.loc.y * (SCREENHEIGHT/state.height));
     }
 
 // If lost, print game over and exit.
