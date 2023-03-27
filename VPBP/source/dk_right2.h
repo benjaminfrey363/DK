@@ -4,7 +4,7 @@ static const struct {
   unsigned int 	 width;
   unsigned int 	 height;
   unsigned int 	 bytes_per_pixel; /* 2:RGB16, 3:RGB, 4:RGBA */ 
-  unsigned char	 pixel_data[34 * 32 * 4 + 1];
+  unsigned char	 pixel_data[32 * 32 * 4 + 1];
 } dk_right2 = {
   32, 32, 4,
   "\377\377\000\000\377\377\000\000\377\377\000\000\377\377\000\000\377\377\000\000\377\377\000\000"

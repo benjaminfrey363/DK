@@ -942,8 +942,8 @@ state.exit.exists = 1;
 unsigned int time0;
 unsigned int enemy_move_reference_time = *clo;
 unsigned int dk_sprite_change_reference = *clo;
-int dk_sprite_change_interval = 500000000;      //Suppose to be 0.5 second
-int enemy_move_delay = 1000000000;  //Suppose to be 1 second
+int dk_sprite_change_interval = 500000;      //Suppose to be 0.5 second
+int enemy_move_delay = 1000000;  //Suppose to be 1 second
 int spriteTracker = 0;
 
 // this loop will run while we're in the first level - break if either win flag or lose flag is set.
@@ -962,7 +962,6 @@ while (!state.winflag && !state.loseflag) {
 
     // Move DK accordingly.
     
-
     /*Based on clock value, this if-construct will be entered every 0.5 seconds. It will change the sprite model 
     * for the direction that DK is facing.
     */
@@ -993,6 +992,7 @@ while (!state.winflag && !state.loseflag) {
             }
             spriteTracker = 0;
         }
+
 
     }
 
