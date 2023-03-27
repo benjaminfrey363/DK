@@ -11,6 +11,12 @@
 #include "dk_right1.h"
 #include "dk_right2.h"
 
+#include "bananarang.h"
+#include "bananarang2.h"
+#include "bananarang3.h"
+#include "bananarangpack.h"
+#include "emptypack.h"
+
 #include "enemy.h"
 #include "coin.h"
 #include "health.h"
