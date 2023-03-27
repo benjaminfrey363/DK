@@ -14,15 +14,26 @@
 #include "dk_right1.h"
 #include "dk_right2.h"
 
+#include "bananarang.h"
+#include "bananarang2.h"
+#include "bananarang3.h"
+#include "bananarangpack.h"
+#include "emptypack.h"
+
 #include "enemy.h"
 #include "coin.h"
 #include "health.h"
 #include "black.h"
+#include "heartpack.h"
+#include "coinpack.h"
 
 #define MAXOBJECTS 30
 #define SCREENWIDTH 1888
 #define SCREENHEIGHT 1000
 #define JUMPHEIGHT 100
+
+#define LEFTEND (SCREENWIDTH - SCREENHEIGHT)/2          // Left end of "game box" in pixels.
+#define RIGHTEND LEFTEND + SCREENHEIGHT                 // box has side length of SCREENHEIGHT.
 
 #define FONT_WIDTH 8
 #define FONT_HEIGHT 8
@@ -291,6 +302,20 @@ struct levelSelect{
 // DRAWING FUNCTIONS //
 ///////////////////////
 
+// Convert grid coords -> pixel coords
+int grid_to_pixel_x(int x, int width) {
+    return LEFTEND + x * ((RIGHTEND - LEFTEND)/width);
+}
+
+int grid_to_pixel_y(int y, int height) {
+    return y * (SCREENHEIGHT / height);
+}
+
+// Draws an object at its current grid coordinates.
+void draw_grid(struct object o, int width, int height) {
+    myDrawImage(o.sprite.img, o.sprite.width, o.sprite.height, grid_to_pixel_x(o.loc.x, width), grid_to_pixel_y(o.loc.y, height));
+}
+
 // Draws an int at specified pixel offsets (right end of number at offx)
 void draw_int(unsigned int n, int offx, int offy, unsigned char attr)
 {
@@ -308,12 +333,6 @@ void draw_int(unsigned int n, int offx, int offy, unsigned char attr)
 void draw_image(struct image myimg, int offx, int offy)
 {
     myDrawImage(myimg.img, myimg.width, myimg.height, offx, offy);
-}
-
-// Draws an image structure at specified GRID offsets.
-void draw_grid(struct image myimg, int x, int y, struct gamestate s)
-{
-    draw_image(myimg, x * (SCREENWIDTH / s.width), y * (SCREENHEIGHT / s.height));
 }
 
 // Main drawing method - draws a game state.
@@ -579,12 +598,12 @@ void DKmove(int *buttons, struct gamestate *state)
     if (pressed > 0)
     {
         (*state).dk.dk_immunity = 0;
-        draw_image((*state).background, oldx * (SCREENWIDTH / (*state).width), oldy * (SCREENHEIGHT / (*state).height));
+        draw_image((*state).background, grid_to_pixel_x(oldx, (*state).width), grid_to_pixel_y(oldy, (*state).height));
     }
 
     // Draw DK at his new location...
-
-    draw_image((*state).dk.sprite, (*state).dk.loc.x * (SCREENWIDTH / (*state).width), (*state).dk.loc.y * (SCREENHEIGHT / (*state).height));
+    draw_grid((*state).dk, (*state).width, (*state).height);
+    //draw_image((*state).dk.sprite, (*state).dk.loc.x * (SCREENWIDTH / (*state).width), (*state).dk.loc.y * (SCREENHEIGHT / (*state).height));
 
     // Wait for pressed joypad button to be unpressed before function can be exited
     // Time and score will continue to be updated while we're in this loop so that these values are not paused when Jpad is held down.
@@ -768,8 +787,8 @@ void move_enemy(struct object *ob_ptr, struct gamestate state)
     }
     
     // Draw enemy at new location and erase at old location.
-    draw_image(state.background, oldx * (SCREENWIDTH / state.width), oldy * (SCREENHEIGHT / state.height));
-    draw_image((*ob_ptr).sprite, (*ob_ptr).loc.x * (SCREENWIDTH / state.width), (*ob_ptr).loc.y * (SCREENHEIGHT / state.height));
+    draw_image(state.background, grid_to_pixel_x(oldx, state.width), grid_to_pixel_y(oldy, state.height));
+    draw_grid(*ob_ptr, state.width, state.height);
 }
 
 /*
@@ -843,12 +862,12 @@ void updateBoomerang(struct gamestate *state)
     // Draw boomerang if current position is not dk's position.
     if ((*state).boomerang.loc.x != (*state).dk.loc.x)
     {
-        draw_image((*state).boomerang.sprite, (*state).boomerang.loc.x * (SCREENWIDTH / (*state).width), (*state).boomerang.loc.y * (SCREENHEIGHT / (*state).height));
+        draw_image((*state).boomerang.sprite, grid_to_pixel_x((*state).boomerang.loc.x, (*state).width), grid_to_pixel_y((*state).boomerang.loc.y, (*state).height));
     }
     // Draw boomerang if previous position is not dk's position (as to not erase dk)
     else if (oldx != (*state).dk.loc.x)
     {
-        draw_image((*state).background, oldx * (SCREENWIDTH / (*state).width), oldy * (SCREENHEIGHT / (*state).height));
+        draw_image((*state).background, grid_to_pixel_x(oldx, (*state).width), grid_to_pixel_y(oldy, (*state).height));
     }
 }
 
@@ -1006,9 +1025,9 @@ first_stage:
 
     for (int i = 0; i < 1; ++i)
     {
-        state.packs[i].sprite.img = health_image.pixel_data;
-        state.packs[i].sprite.width = health_image.width;
-        state.packs[i].sprite.height = health_image.height;
+        state.packs[i].sprite.img = heartpack.pixel_data;
+        state.packs[i].sprite.width = heartpack.width;
+        state.packs[i].sprite.height = heartpack.height;
 
         state.packs[i].health_pack = 1;
         state.packs[i].point_pack = 0;
@@ -1022,9 +1041,9 @@ first_stage:
 
     for (int i = 1; i < 2; ++i)
     {
-        state.packs[i].sprite.img = coin_image.pixel_data;
-        state.packs[i].sprite.width = coin_image.width;
-        state.packs[i].sprite.height = coin_image.height;
+        state.packs[i].sprite.img = coinpack.pixel_data;
+        state.packs[i].sprite.width = coinpack.width;
+        state.packs[i].sprite.height = coinpack.height;
 
         state.packs[i].health_pack = 0;
         state.packs[i].point_pack = 1;
@@ -1180,29 +1199,29 @@ first_stage:
                 // No matter what was selected, we should erase the game state before either restarting or exiting.
                 
                 // Erase DK...
-                draw_image(state.background, state.dk.loc.x * (SCREENWIDTH / state.width), state.dk.loc.y * (SCREENHEIGHT / state.height));
+                draw_image(state.background, grid_to_pixel_x(state.dk.loc.x, state.width), grid_to_pixel_y(state.dk.loc.y, state.height));
 
                 // Erase each enemy...
                 for (int i = 0; i < state.num_enemies; ++i)
                 {   
-                    draw_image(state.background, state.enemies[i].loc.x * (SCREENWIDTH / state.width), state.enemies[i].loc.y * (SCREENHEIGHT / state.height));
+                    draw_image(state.background, grid_to_pixel_x(state.enemies[i].loc.x, state.width), grid_to_pixel_y(state.enemies[i].loc.y, state.height));
                 }
 
                 // Erase each pack...
                 for (int i = 0; i < state.num_packs; ++i)
                 {
-                    draw_image(state.background, state.packs[i].loc.x * (SCREENWIDTH / state.width), state.packs[i].loc.y * (SCREENHEIGHT / state.height));
+                    draw_image(state.background, grid_to_pixel_x(state.packs[i].loc.x, state.width), grid_to_pixel_y(state.packs[i].loc.y, state.height));
                 }
 
                 // Erase each vehicle...
                 for (int i = 0; i < state.num_vehicles; ++i)
                 {
-                    draw_image(state.background, state.vehicles[i].start.loc.x * (SCREENWIDTH / state.width), state.vehicles[i].start.loc.y * (SCREENHEIGHT / state.height));
-                    draw_image(state.background, state.vehicles[i].finish.loc.x * (SCREENWIDTH / state.width), state.vehicles[i].finish.loc.y * (SCREENHEIGHT / state.height));
+                    draw_image(state.background, grid_to_pixel_x(state.vehicles[i].start.loc.x, state.width), grid_to_pixel_y(state.vehicles[i].start.loc.y, state.height));
+                    draw_image(state.background, grid_to_pixel_x(state.vehicles[i].finish.loc.x, state.width), grid_to_pixel_y(state.vehicles[i].finish.loc.y, state.height));
                 }
                 
                 // Erase exit...
-                draw_image(state.background, state.exit.loc.x * (SCREENWIDTH / state.width), state.exit.loc.y * (SCREENHEIGHT / state.height));
+                draw_image(state.background, grid_to_pixel_x(state.exit.loc.x, state.width), grid_to_pixel_y(state.exit.loc.y, state.height));
                 
                 // Erase time, score, lives before terminating...
                 drawString(SCREENWIDTH - 200, FONT_HEIGHT, "       ", 0xF);     // Erase "SCORE:"
@@ -1372,8 +1391,8 @@ first_stage:
                 }
     
                 // Draw enemy at new location and erase at old location.
-                draw_image(state.background, oldx * (SCREENWIDTH / state.width), oldy * (SCREENHEIGHT / state.height));
-                draw_image(state.enemies[i].sprite, state.enemies[i].loc.x * (SCREENWIDTH / state.width), state.enemies[i].loc.y * (SCREENHEIGHT / state.height));
+                draw_image(state.background, grid_to_pixel_x(oldx, state.width), grid_to_pixel_y(oldy, state.height));
+                draw_grid(state.enemies[i], state.width, state.height);
             }
         }
 
@@ -1415,32 +1434,35 @@ first_stage:
         // Draw each enemy...
         for (int i = 0; i < state.num_enemies; ++i)
         {
-            // Print state.enemies[i] with grid coords (x, y) at location (x * SCREENWIDTH/state.width, y * SCREENHEIGHT/state.height)
             if (state.enemies[i].exists)
             {
-                draw_image(state.enemies[i].sprite, state.enemies[i].loc.x * (SCREENWIDTH / state.width), state.enemies[i].loc.y * (SCREENHEIGHT / state.height));
+                draw_grid(state.enemies[i], state.width, state.height);
+                // draw_image(state.enemies[i].sprite, state.enemies[i].loc.x * (SCREENWIDTH / state.width), state.enemies[i].loc.y * (SCREENHEIGHT / state.height));
             }
         }
 
         // Draw each pack...
         for (int i = 0; i < state.num_packs; ++i)
         {
-            // Print state.packs[i] with grid coords (x, y) at location (x * SCREENWIDTH/state.width, y * SCREENHEIGHT/state.height)
             if (state.packs[i].exists)
-                draw_image(state.packs[i].sprite, state.packs[i].loc.x * (SCREENWIDTH / state.width), state.packs[i].loc.y * (SCREENHEIGHT / state.height));
+                draw_grid(state.packs[i], state.width, state.height);
+                // draw_image(state.packs[i].sprite, state.packs[i].loc.x * (SCREENWIDTH / state.width), state.packs[i].loc.y * (SCREENHEIGHT / state.height));
         }
 
         // Draw each vehicle...
         for (int i = 0; i < state.num_vehicles; ++i)
         {
             // Draw start...
-            draw_image(state.vehicles[i].start.sprite, state.vehicles[i].start.loc.x * (SCREENWIDTH / state.width), state.vehicles[i].start.loc.y * (SCREENHEIGHT / state.height));
+            draw_grid(state.vehicles[i].start, state.width, state.height);
+            //draw_image(state.vehicles[i].start.sprite, state.vehicles[i].start.loc.x * (SCREENWIDTH / state.width), state.vehicles[i].start.loc.y * (SCREENHEIGHT / state.height));
             // Draw finish...
-            draw_image(state.vehicles[i].finish.sprite, state.vehicles[i].finish.loc.x * (SCREENWIDTH / state.width), state.vehicles[i].finish.loc.y * (SCREENHEIGHT / state.height));
+            draw_grid(state.vehicles[i].finish, state.width, state.height);
+            //draw_image(state.vehicles[i].finish.sprite, state.vehicles[i].finish.loc.x * (SCREENWIDTH / state.width), state.vehicles[i].finish.loc.y * (SCREENHEIGHT / state.height));
         }
 
         // Draw the exit...
-        draw_image(state.exit.sprite, state.exit.loc.x * (SCREENWIDTH / state.width), state.exit.loc.y * (SCREENHEIGHT / state.height));
+        draw_grid(state.exit, state.width, state.height);
+        //draw_image(state.exit.sprite, state.exit.loc.x * (SCREENWIDTH / state.width), state.exit.loc.y * (SCREENHEIGHT / state.height));
 
         // Print score...
         draw_int(state.score, SCREENWIDTH, FONT_HEIGHT, 0xF);
@@ -1470,29 +1492,29 @@ first_stage:
 
     // Before doing anything else, clear the screen... (memcpy error when I try to call function, body copied here instead...)
     // Erase DK...
-    draw_image(state.background, state.dk.loc.x * (SCREENWIDTH / state.width), state.dk.loc.y * (SCREENHEIGHT / state.height));
+    draw_image(state.background, grid_to_pixel_x(state.dk.loc.x, state.width), grid_to_pixel_y(state.dk.loc.y, state.height));
 
     // Erase each enemy...
     for (int i = 0; i < state.num_enemies; ++i)
     {
-        draw_image(state.background, state.enemies[i].loc.x * (SCREENWIDTH / state.width), state.enemies[i].loc.y * (SCREENHEIGHT / state.height));
+        draw_image(state.background, grid_to_pixel_x(state.enemies[i].loc.x, state.width), grid_to_pixel_y(state.enemies[i].loc.y, state.height));
     }
 
     // Erase each pack...
     for (int i = 0; i < state.num_packs; ++i)
     {
-        draw_image(state.background, state.packs[i].loc.x * (SCREENWIDTH / state.width), state.packs[i].loc.y * (SCREENHEIGHT / state.height));
+        draw_image(state.background, grid_to_pixel_x(state.packs[i].loc.x, state.width), grid_to_pixel_y(state.packs[i].loc.y, state.height));
     }
 
     // Erase each vehicle...
     for (int i = 0; i < state.num_vehicles; ++i)
     {
-        draw_image(state.background, state.vehicles[i].start.loc.x * (SCREENWIDTH / state.width), state.vehicles[i].start.loc.y * (SCREENHEIGHT / state.height));
-        draw_image(state.background, state.vehicles[i].finish.loc.x * (SCREENWIDTH / state.width), state.vehicles[i].finish.loc.y * (SCREENHEIGHT / state.height));
+        draw_image(state.background, grid_to_pixel_x(state.vehicles[i].start.loc.x, state.width), grid_to_pixel_y(state.vehicles[i].start.loc.y, state.height));
+        draw_image(state.background, grid_to_pixel_x(state.vehicles[i].finish.loc.x, state.width), grid_to_pixel_y(state.vehicles[i].finish.loc.y, state.height));
     }
     
     // Erase exit...
-    draw_image(state.background, state.exit.loc.x * (SCREENWIDTH / state.width), state.exit.loc.y * (SCREENHEIGHT / state.height));
+    draw_image(state.background, grid_to_pixel_x(state.exit.loc.x, state.width), grid_to_pixel_y(state.exit.loc.y, state.height));
 
     // If lost, print game over and return to menu.
     if (state.loseflag)
