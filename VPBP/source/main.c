@@ -4,6 +4,14 @@
 
 // include images
 #include "dk_image.h"
+#include "dk_ladder1.h"
+#include "dk_ladder2.h"
+#include "dk_left1.h"
+#include "dk_left2.h"
+#include "dk_right1.h"
+#include "dk_right2.h"
+
+
 #include "enemy.h"
 #include "coin.h"
 #include "health.h"
@@ -488,6 +496,7 @@ void DKmove(int *buttons, struct gamestate *state)
 	        uart_puts("Right\n");
 	        pressed = 7;
             (*state).dk.loc.x += (*state).dk.speed;
+            (*state).dk.enemy_direction = 1;
         }
     }
 
@@ -498,6 +507,7 @@ void DKmove(int *buttons, struct gamestate *state)
 	        uart_puts("Left\n");
 	        pressed = 6;
             (*state).dk.loc.x -= (*state).dk.speed;
+            (*state).dk.enemy_direction = 0;
         }
     }
 
@@ -508,6 +518,7 @@ void DKmove(int *buttons, struct gamestate *state)
 	        uart_puts("Up\n");
 	        pressed = 4;
             (*state).dk.loc.y -= (*state).dk.speed;
+            (*state).dk.enemy_direction = 2;
         }
     }
 
@@ -518,6 +529,7 @@ void DKmove(int *buttons, struct gamestate *state)
 	        uart_puts("Down\n");
 	        pressed = 5;
             (*state).dk.loc.y += (*state).dk.speed;
+            (*state).dk.enemy_direction = 2;
         }
     }
 
@@ -705,6 +717,7 @@ void move_enemy(struct object *ob_ptr, int width) {
 }
 
 
+
 //////////
 // MAIN //
 //////////
@@ -809,9 +822,9 @@ state.background.height = black_image.height;
 
 // DK
 
-state.dk.sprite.img = dk_image.pixel_data;
-state.dk.sprite.width = dk_image.width;
-state.dk.sprite.height = dk_image.height;
+state.dk.sprite.img = dk_right1.pixel_data;         //Initial image of DK will be standing, facing right.
+state.dk.sprite.width = dk_right1.width;
+state.dk.sprite.height = dk_right1.height;
 
 state.dk.loc.x = 2;
 state.dk.loc.y = 16;
@@ -927,6 +940,11 @@ state.exit.exists = 1;
 //////////////////////
 
 unsigned int time0;
+unsigned int enemy_move_reference_time = *clo;
+unsigned int dk_sprite_change_reference = *clo;
+int dk_sprite_change_interval = 500000;      //Suppose to be 0.5 second
+int enemy_move_delay = 1000000;  //Suppose to be 1 second
+int spriteTracker = 0;
 
 // this loop will run while we're in the first level - break if either win flag or lose flag is set.
 while (!state.winflag && !state.loseflag) {
@@ -943,6 +961,41 @@ while (!state.winflag && !state.loseflag) {
     // draw_image(state.background, state.dk.loc.x * (SCREENWIDTH / state.width), state.dk.loc.y * (SCREENHEIGHT / state.height));
 
     // Move DK accordingly.
+    
+    /*Based on clock value, this if-construct will be entered every 0.5 seconds. It will change the sprite model 
+    * for the direction that DK is facing.
+    */
+    if(dk_sprite_change_reference + dk_sprite_change_interval >= time0){
+        dk_sprite_change_reference = *clo;
+
+        if(spriteTracker == 0){
+            if(state.dk.enemy_direction == 1){                      //if DK is facing right, switch to second right sprite
+                state.dk.sprite.img = dk_right2.pixel_data;         
+            }
+            else if(state.dk.enemy_direction == 0){                 //if DK is facing left, switch to second left sprite
+                state.dk.sprite.img = dk_left2.pixel_data;
+            }
+            else if(state.dk.enemy_direction == 2){                 //if DK is climbing a ladder (up or down), switch to second ladder sprite
+                state.dk.sprite.img = dk_ladder2.pixel_data;
+            }
+            spriteTracker = 1;                                      //Tracker shifts, next interval will switch sprites. 
+        }
+        else if(spriteTracker == 1){
+            if(state.dk.enemy_direction == 1){                      //if DK is facing right, switch to first right sprite
+                state.dk.sprite.img = dk_right1.pixel_data;         
+            }
+            else if(state.dk.enemy_direction == 0){                 //if DK is facing left, switch to first left sprite
+                state.dk.sprite.img = dk_left1.pixel_data;
+            }
+            else if(state.dk.enemy_direction == 2){                 //if DK is climbing a ladder (up or down), switch to first ladder sprite
+                state.dk.sprite.img = dk_ladder1.pixel_data;
+            }
+            spriteTracker = 0;
+        }
+
+
+    }
+
     DKmove(buttons, &state);
 
     // For now, enemies are stationary.
@@ -1012,6 +1065,13 @@ while (!state.winflag && !state.loseflag) {
         
     }
     }
+    if(enemy_move_reference_time + enemy_move_delay >= time0){
+        enemy_move_reference_time = *clo;
+        for(int i = 0; i < state.num_enemies; i++){
+            move_enemy(&state.enemies[i], state.enemies[i].sprite.width);
+        }
+    }
+    
 
     // Check to see if DK has reached the exit, set winflag if he has...
     if (state.dk.loc.x == state.exit.loc.x && state.dk.loc.y == state.exit.loc.y) {
