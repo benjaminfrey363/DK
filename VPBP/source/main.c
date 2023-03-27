@@ -21,6 +21,8 @@
 #include "coin.h"
 #include "health.h"
 #include "black.h"
+#include "heartpack.h"
+#include "coinpack.h"
 
 #define MAXOBJECTS 30
 #define SCREENWIDTH 1888
@@ -997,9 +999,9 @@ int main()
 
     for (int i = 0; i < 1; ++i)
     {
-        state.packs[i].sprite.img = health_image.pixel_data;
-        state.packs[i].sprite.width = health_image.width;
-        state.packs[i].sprite.height = health_image.height;
+        state.packs[i].sprite.img = heartpack.pixel_data;
+        state.packs[i].sprite.width = heartpack.width;
+        state.packs[i].sprite.height = heartpack.height;
 
         state.packs[i].health_pack = 1;
         state.packs[i].point_pack = 0;
@@ -1013,9 +1015,9 @@ int main()
 
     for (int i = 1; i < 2; ++i)
     {
-        state.packs[i].sprite.img = coin_image.pixel_data;
-        state.packs[i].sprite.width = coin_image.width;
-        state.packs[i].sprite.height = coin_image.height;
+        state.packs[i].sprite.img = coinpack.pixel_data;
+        state.packs[i].sprite.width = coinpack.width;
+        state.packs[i].sprite.height = coinpack.height;
 
         state.packs[i].health_pack = 0;
         state.packs[i].point_pack = 1;
