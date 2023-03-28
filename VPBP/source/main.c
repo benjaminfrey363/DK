@@ -305,7 +305,7 @@ struct startMenu
 };
 
 
-int map1[] = {
+int map1[625] = {
     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0
     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0
     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 0 0 0
@@ -452,13 +452,13 @@ void set_screen(struct gamestate state)
 
     for(int i = 0; i < (state.width * state.height); ++i){
         if(state.map_tiles.map[i] == 0){
-            myDrawImage(black_image.pixel_data, black_image.width, black_image.height, grid_to_pixel_x((i % 25), state.width), grid_to_pixel_y((i / 25), state.height))
+            myDrawImage(black_image.pixel_data, black_image.width, black_image.height, grid_to_pixel_x((i % 25), state.width), grid_to_pixel_y((i / 25), state.height));
         }
         else if(state.map_tiles.map[i] == 1){        //Draw Platform
-            myDrawImage(black_image.pixel_data, black_image.width, black_image.height, grid_to_pixel_x((i % 25), state.width), grid_to_pixel_y((i / 25), state.height))
+            myDrawImage(black_image.pixel_data, black_image.width, black_image.height, grid_to_pixel_x((i % 25), state.width), grid_to_pixel_y((i / 25), state.height));
         }
         else if(state.map_tiles.map[i] == 2){        //Draw Ladder
-            myDrawImage(black_image.pixel_data, black_image.width, black_image.height, (grid_to_pixel_x((i % 25), state.width)), grid_to_pixel_y((i / 25), state.height))
+            myDrawImage(black_image.pixel_data, black_image.width, black_image.height, (grid_to_pixel_x((i % 25), state.width)), grid_to_pixel_y((i / 25), state.height));
         }
     }
 }
@@ -734,7 +734,7 @@ void DKmove(int *buttons, struct gamestate *state)
     }
 
     // Draw DK at his new location...
-    draw_grid((*state).dk, (*state).width, (*state).height);
+    draw_grid(&((*state).dk), (*state).width, (*state).height);
     // draw_image((*state).dk.sprite, (*state).dk.loc.x * (SCREENWIDTH / (*state).width), (*state).dk.loc.y * (SCREENHEIGHT / (*state).height));
 
     // Wait for pressed joypad button to be unpressed before function can be exited
@@ -1368,7 +1368,7 @@ first_stage:
 
                 // Draw enemy at new location and erase at old location.
                 draw_image(state.background, grid_to_pixel_x(oldx, state.width), grid_to_pixel_y(oldy, state.height));
-                draw_grid(state.enemies[i], state.width, state.height);
+                draw_grid(&(state.enemies[i]), state.width, state.height);
                 
                 // If old location corresponds to a trampled pack, vehicle, or exit, set trampled to false for that object.
                 if (oldx == state.exit.loc.x && oldy == state.exit.loc.y && state.exit.trampled) state.exit.trampled = 0;
@@ -1432,7 +1432,7 @@ first_stage:
         }
 
         // draw game state.
-        draw_state(&state);
+        draw_state(&state, time0);
     }
 
     // First stage exited...
