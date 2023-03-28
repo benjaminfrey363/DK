@@ -350,9 +350,9 @@ int grid_to_pixel_y(int y, int height)
 }
 
 // Draws an object at its current grid coordinates.
-void draw_grid(struct object o, int width, int height)
+void draw_grid(struct object *o, int width, int height)
 {
-    if (!o.trampled) myDrawImage(o.sprite.img, o.sprite.width, o.sprite.height, grid_to_pixel_x(o.loc.x, width), grid_to_pixel_y(o.loc.y, height));
+    if (!(*o).trampled) myDrawImage((*o).sprite.img, (*o).sprite.width, (*o).sprite.height, grid_to_pixel_x((*o).loc.x, width), grid_to_pixel_y((*o).loc.y, height));
 }
 
 // Draws an int at specified pixel offsets (right end of number at offx)
@@ -377,20 +377,16 @@ void draw_image(struct image myimg, int offx, int offy)
 // Main drawing method - draws a game state.
 // Coordinates of all objects are in grid coords, so need to convert these to pixel
 // coords in order to draw.
-void draw_state(struct gamestate * state)
-{
-
-    // First, draw background at the origin...
-    // draw_image(state->background, 0, 0);
-
+void draw_state(struct gamestate * state, unsigned int init_time) {
     // Draw DK...
-    draw_image(state->dk.sprite, state->dk.loc.x * (SCREENWIDTH / state->width), state->dk.loc.y * (SCREENHEIGHT / state->height));
+    // draw_grid(state->dk, state->width, state->height);
+    // Drawing of DK moved to DKmove.
 
     // Draw each enemy...
     for (int i = 0; i < state->num_enemies; ++i)
     {
         // Print state->enemies[i] with grid coords (x, y) at location (x * SCREENWIDTH/state->width, y * SCREENHEIGHT/state->height)
-        draw_image(state->enemies[i].sprite, state->enemies[i].loc.x * (SCREENWIDTH / state->width), state->enemies[i].loc.y * (SCREENHEIGHT / state->height));
+        if (state->enemies[i].exists) draw_grid(&(state->enemies[i]), state->width, state->height);
     }
 
     // Draw each pack...
@@ -398,54 +394,55 @@ void draw_state(struct gamestate * state)
     {
         // Print state->packs[i] with grid coords (x, y) at location (x * SCREENWIDTH/state->width, y * SCREENHEIGHT/state->height)
         if (state->packs[i].exists)
-            draw_image(state->packs[i].sprite, state->packs[i].loc.x * (SCREENWIDTH / state->width), state->packs[i].loc.y * (SCREENHEIGHT / state->height));
+            draw_grid(&(state->packs[i]), state->width, state->height);
     }
 
     // Draw each vehicle...
     for (int i = 0; i < state->num_vehicles; ++i)
     {
         // Draw start...
-        draw_image(state->vehicles[i].start.sprite, state->vehicles[i].start.loc.x * (SCREENWIDTH / state->width), state->vehicles[i].start.loc.y * (SCREENHEIGHT / state->height));
+        draw_grid(&(state->vehicles[i].start), state->width, state->height);
         // Draw finish...
-        draw_image(state->vehicles[i].finish.sprite, state->vehicles[i].finish.loc.x * (SCREENWIDTH / state->width), state->vehicles[i].finish.loc.y * (SCREENHEIGHT / state->height));
+        draw_grid(&(state->vehicles[i].finish), state->width, state->height);
     }
 
-    // Print score...
-    draw_int((*state).score, SCREENWIDTH, FONT_HEIGHT, 0xF);
+    // Draw the exit...
+    draw_grid(&(state->exit), state->width, state->height);
+
+    // Update and print score...
+    state->score = state->time + (250000 * state->lives) + (250000 * state->dk.num_coins_grabbed);
+    draw_int(state->score, SCREENWIDTH, FONT_HEIGHT, 0xF);
     drawString(SCREENWIDTH - 200, FONT_HEIGHT, "SCORE:", 0xF);
 
-    // Print time remaining...
-    draw_int((*state).time, SCREENWIDTH, 2 * FONT_HEIGHT, 0xF);
+    // Update and print time remaining...
+
+    // First calculate time elapsed by this iteration of loop.
+    init_time = (*clo - init_time) / 1000; // init_time is time elapsed in thousandths of a second.
+    state->time -= init_time;
+
+    // If state.time is now leq 0, set loseflag.
+    if (state->time <= 0)
+        state->loseflag = 1;
+
+    draw_int(state->time, SCREENWIDTH, 2 * FONT_HEIGHT, 0xF);
     drawString(SCREENWIDTH - 200, 2 * FONT_HEIGHT, "TIME:", 0xF);
 
     // Print lives remaining... (replace with hearts later)
-    draw_int((*state).lives, SCREENWIDTH, 3 * FONT_HEIGHT, 0xF);
+    draw_int(state->lives, SCREENWIDTH, 3 * FONT_HEIGHT, 0xF);
     drawString(SCREENWIDTH - 200, 3 * FONT_HEIGHT, "LIVES:", 0xF);
+
+    // End of drawing gamestate.
 }
 
-// Clear every object on the screeen using the eraser image.
-void clear_screen(struct gamestate state, struct image eraser)
+// Print black at every cell of the gamestate.
+void black_screen(struct gamestate *state)
 {
-    // Erase DK...
-    draw_image(eraser, state.dk.loc.x * (SCREENWIDTH / state.width), state.dk.loc.y * (SCREENHEIGHT / state.height));
-
-    // Erase each enemy...
-    for (int i = 0; i < state.num_enemies; ++i)
+    for (int i = 0; i < state->width; ++i)
     {
-        draw_image(eraser, state.enemies[i].loc.x * (SCREENWIDTH / state.width), state.enemies[i].loc.y * (SCREENHEIGHT / state.height));
-    }
-
-    // Erase each pack...
-    for (int i = 0; i < state.num_packs; ++i)
-    {
-        draw_image(eraser, state.packs[i].loc.x * (SCREENWIDTH / state.width), state.packs[i].loc.y * (SCREENHEIGHT / state.height));
-    }
-
-    // Erase each vehicle...
-    for (int i = 0; i < state.num_vehicles; ++i)
-    {
-        draw_image(eraser, state.vehicles[i].start.loc.x * (SCREENWIDTH / state.width), state.vehicles[i].start.loc.y * (SCREENHEIGHT / state.height));
-        draw_image(eraser, state.vehicles[i].finish.loc.x * (SCREENWIDTH / state.width), state.vehicles[i].finish.loc.y * (SCREENHEIGHT / state.height));
+        for (int j = 0; j < state->height; ++j)
+        {
+            myDrawImage(black_image.pixel_data, black_image.width, black_image.height, grid_to_pixel_x(i, state->width), grid_to_pixel_y(j, state->height));
+        }
     }
 }
 
@@ -510,6 +507,154 @@ int startMenuSelectOption(int *buttons, struct startMenu *start)
     return 0;
 }
 
+
+// Draws start menu, runs start menu selection process.
+// Returns start_flag - equal to 1 if start was selected, -1 if quit was selected.
+int start_menu(struct startMenu *sm, int *buttons) {
+    sm->startGameSelected = 1;
+    sm->quitGameSelected = 0;
+    int start_flag = 0;
+
+    // Draw rectangle border...
+    drawRect(SCREENWIDTH / 2 - 100, SCREENHEIGHT / 2 - 100, SCREENWIDTH / 2 + 100, SCREENHEIGHT / 2 + 100, 0xF, 0);
+
+    while (start_flag == 0)
+    {
+        // Display selection options with currently selected option being pointed to...
+        if (sm->startGameSelected)
+        {
+            drawString(SCREENWIDTH / 2 - 50, SCREENHEIGHT / 2 - 25, "-> START GAME", 0xF);
+            drawString(SCREENWIDTH / 2 - 50, SCREENHEIGHT / 2 + 25, "   QUIT GAME", 0xF);
+        }
+        else if (sm->quitGameSelected)
+        {
+            drawString(SCREENWIDTH / 2 - 50, SCREENHEIGHT / 2 - 25, "   START GAME", 0xF);
+            drawString(SCREENWIDTH / 2 - 50, SCREENHEIGHT / 2 + 25, "-> QUIT GAME", 0xF);
+        }
+        // Loop while startMenuSelectOption returns 0 - so breaks when player presses
+        // A on either start or quit option.
+        read_SNES(buttons);
+        // Pass address of sm so that flag attributes can be modified by function.
+        // Function will automatically erase text when selection moves up/down.
+        start_flag = startMenuSelectOption(buttons, sm);
+    }
+
+    // Erase selection menu from screen...
+    drawRect(SCREENWIDTH / 2 - 100, SCREENHEIGHT / 2 - 100, SCREENWIDTH / 2 + 100, SCREENHEIGHT / 2 + 100, 0x0, 1);
+
+    return start_flag;
+}
+
+
+// Returns 0 to return to gameplay, 1 to exit game, 2 to restart.
+int pause_menu(int *buttons, struct gamestate *state) {
+    int restart_pressed = 1;
+    int pressed_a = 0;
+    int exit_game = 0;
+    wait(500000); // Wait for a bit to stop menu from immediately closing.
+
+    // Draw white rectangle border and black rectangle fill...
+    drawRect(SCREENWIDTH / 2 - 75, SCREENHEIGHT / 2 - 50, SCREENWIDTH / 2 + 200, SCREENHEIGHT / 2 + 100, 0x0, 1);
+    drawRect(SCREENWIDTH / 2 - 75, SCREENHEIGHT / 2 - 50, SCREENWIDTH / 2 + 200, SCREENHEIGHT / 2 + 100, 0xF, 0);
+
+    while (!pressed_a)
+    {
+        // First, display pause menu...
+
+        if (restart_pressed) {
+            drawString(SCREENWIDTH / 2, SCREENHEIGHT / 2, "-> RESTART GAME", 0xF);
+            drawString(SCREENWIDTH / 2, SCREENHEIGHT / 2 + 50, "   QUIT GAME", 0xF);
+        } else {
+                    drawString(SCREENWIDTH / 2, SCREENHEIGHT / 2, "   RESTART GAME", 0xF);
+                    drawString(SCREENWIDTH / 2, SCREENHEIGHT / 2 + 50, "-> QUIT GAME", 0xF);
+                }
+
+        // Read controller...
+        read_SNES(buttons);
+
+        // If start is pressed again, wait for a bit and then break (to prevent pause
+        // menu from immediately opening again).
+        if (buttons[4 - 1] == 0)
+        {
+            wait(500000);
+            break;
+        }
+
+        else if (buttons[5 - 1] == 0)
+        {
+            // Up is pressed.
+            restart_pressed = 1;
+        }
+
+        else if (buttons[6 - 1] == 0)
+        {
+            // Down is pressed.
+            restart_pressed = 0;
+        }
+
+        else if (buttons[9 - 1] == 0)
+            {
+                // A is pressed, execute current selection.
+                pressed_a = 1;
+            }
+    }
+
+    // Erase pause menu...
+    drawRect(SCREENWIDTH / 2 - 75, SCREENHEIGHT / 2 - 50, SCREENWIDTH / 2 + 200, SCREENHEIGHT / 2 + 100, 0x0, 1);
+    drawString(SCREENWIDTH / 2, SCREENHEIGHT / 2, "                ", 0xF);
+    drawString(SCREENWIDTH / 2, SCREENHEIGHT / 2 + 50, "              ", 0xF);
+
+    if (pressed_a) {
+        // Execute current selection. Otherwise, start was pressed to exit game menu and
+        // we continue playing the game.
+
+        // No matter what was selected, we should erase the game state before either restarting or exiting.
+
+        // Erase DK...
+        draw_image(state->background, grid_to_pixel_x(state->dk.loc.x, state->width), grid_to_pixel_y(state->dk.loc.y, state->height));
+
+        // Erase each enemy...
+        for (int i = 0; i < state->num_enemies; ++i)
+        {
+            draw_image(state->background, grid_to_pixel_x(state->enemies[i].loc.x, state->width), grid_to_pixel_y(state->enemies[i].loc.y, state->height));
+        }
+
+        // Erase each pack...
+        for (int i = 0; i < state->num_packs; ++i)
+        {
+            draw_image(state->background, grid_to_pixel_x(state->packs[i].loc.x, state->width), grid_to_pixel_y(state->packs[i].loc.y, state->height));
+        }
+
+        // Erase each vehicle...
+        for (int i = 0; i < state->num_vehicles; ++i)
+        {
+            draw_image(state->background, grid_to_pixel_x(state->vehicles[i].start.loc.x, state->width), grid_to_pixel_y(state->vehicles[i].start.loc.y, state->height));
+            draw_image(state->background, grid_to_pixel_x(state->vehicles[i].finish.loc.x, state->width), grid_to_pixel_y(state->vehicles[i].finish.loc.y, state->height));
+        }
+
+        // Erase exit...
+        draw_image(state->background, grid_to_pixel_x(state->exit.loc.x, state->width), grid_to_pixel_y(state->exit.loc.y, state->height));
+
+        // Erase time, score, lives before terminating...
+        drawString(SCREENWIDTH - 200, FONT_HEIGHT, "       ", 0xF);     // Erase "SCORE:"
+        drawString(SCREENWIDTH - 200, 2 * FONT_HEIGHT, "      ", 0xF);  // Erase "TIME:"
+        drawString(SCREENWIDTH - 200, 3 * FONT_HEIGHT, "       ", 0xF); // ERASE "LIVES:"
+
+        // Erase numbers (big buffer used, during testing time counter has been holding some crazy values):
+        drawString(SCREENWIDTH - 100, FONT_HEIGHT, "                        ", 0xF);
+        drawString(SCREENWIDTH - 100, 2 * FONT_HEIGHT, "                        ", 0xF);
+        drawString(SCREENWIDTH - 100, 3 * FONT_HEIGHT, "                        ", 0xF);
+
+        if (restart_pressed) exit_game = 2; // Restart first level.
+        else {
+            drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT / 2, "Exiting...", 0xF);
+            wait(2000000);
+            drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT / 2, "          ", 0xF);
+            exit_game = 1;
+        }
+    }
+    return exit_game;
+}
 
 ////////////////////////
 // MOVEMENT FUNCTIONS //
@@ -614,139 +759,6 @@ void DKmove(int *buttons, struct gamestate *state)
     }
 }
 
-/*
- * This method will iterate through the array of object coordinates and check
- * if DK's next step in the given direction would result in a collision with
- * any object. Returning a 1 will indicate that DK will collide with an object.
- */
-/*
-int checkCollision(int direction, struct gamestate state)
-{
-   if (direction == 1)
-   { // DK moving right
-       for (int i = 1; i < state.num_objects; i++)
-       { // Iterate through list of all positions, find if any x values match;
-           if (state.positions[0].x + 1 == state.positions[i].x)
-           { // If DK's X value is the same as another x value,
-               if (state.positions[0].y == state.positions[i].y)
-               {
-                   return 1;
-               }
-           }
-       }
-   }
-   else if (direction == 2)
-   { // DK moving left
-       for (int i = 1; i < state.num_objects; i++)
-       { // Iterate through list of all positions, find if any x values match;
-           if (state.positions[0].x - 1 == state.positions[i].x)
-           { // If DK's X value is the same as another x value,
-               if (state.positions[0].y == state.positions[i].y)
-               {
-                   return 1;
-               }
-           }
-       }
-   }
-   else if (direction == 3)
-   { // DK moving up
-       for (int i = 1; i < state.num_objects; i++)
-       { // Iterate through list of all positions, find if any x values match;
-           if (state.positions[0].x == state.positions[i].x)
-           { // If DK's X value is the same as another x value,
-               if (state.positions[0].y - 1 == state.positions[i].y)
-               {
-                   return 1;
-               }
-           }
-       }
-   }
-   else if (direction == 4)
-   { // DK moving down
-       for (int i = 1; i < state.num_objects; i++)
-       { // Iterate through list of all positions, find if any x values match;
-           if (state.positions[0].x == state.positions[i].x)
-           { // If DK's X value is the same as another x value,
-               if (state.positions[0].y + 1 == state.positions[i].y)
-               {
-                   return 1;
-               }
-           }
-       }
-   }
-   return 0;
-}
-*/
-
-/*
-// Controls horizontal movement. Updates object offsets according to which buttons are pressed.
-// Does not print anything.
-// Takes offset arguments as pointers so that these offsets can be edited.
-void move_horz(int *btns, int *offx) {
-    if (btns[6] == 0) {
-        // Pressing left
-        if (*offx > 0) --(*offx);
-    }
-    if (btns[7] == 0) {
-        // Pressing right
-        if (*offx < SCREENWIDTH) ++(*offx);
-    }
-}
-*/
-
-/*
-// Takes a gamestate as an argument. Gets DK to jump, while continuing to take button
-// inputs and updating x position accordingly. Continues updating enemy positions as well
-// (done randomly), and prints the gamestate at each step.
-void jump(struct gamestate *state_ptr, int *btns) {
-    for (int i = 0; i <= JUMPHEIGHT; ++i) {
-        // Print sprite at location (offx, offy - i).
-        // Check to see if left or right is pressed and update offx accordingly.
-        read_SNES(buttons);
-        move_horz(buttons, &((*state_ptr).objects[0].loc.x));
-        --((*state_ptr).objects[0].loc.y);		// Decrement offy each iteration.
-
-    // Randomly update locations of enemies...
-
-    for (int i = 1; i < (*state_ptr).num_objects; ++i) {
-        // For now all random movement is left
-        move_rand(&((*state_ptr).objects[i]), 1);
-    }
-
-    // Draw gamestate.
-    // First draw background...
-    draw_image((*state_ptr).background, 0, 0);
-    // Draw each object...
-    for (int i = 0; i < (*state_ptr).num_objects; ++i)
-        draw_image((*state_ptr).objects[i].sprite, (*state_ptr).objects[i].loc.x, (*state_ptr).objects[i].loc.y);
-    }
-
-    // Get sprite to fall back down...
-    for (int i = JUMPHEIGHT; i >= 0; --i) {
-        // Print sprite at location (offx, offy - i)
-        // Check to see if left or right is pressed and update offx accordingly.
-        read_SNES(buttons);
-        move_horz(buttons, &((*state_ptr).objects[0].loc.x));
-        ++((*state_ptr).objects[0].loc.y);		// Increment *offy each iteration.
-
-        // Randomly update locations of enemies...
-
-    for (int i = 1; i < (*state_ptr).num_objects; ++i) {
-        // For now all random movement is left
-        move_rand(&((*state_ptr).objects[i]), 1);
-    }
-
-    // Draw gamestate.
-    // First draw background...
-    draw_image((*state_ptr).background, 0, 0);
-    // Draw each object...
-    for (int i = 0; i < (*state_ptr).num_objects; ++i)
-        draw_image((*state_ptr).objects[i].sprite, (*state_ptr).objects[i].loc.x, (*state_ptr).objects[i].loc.y);
-
-    }
-}
-*/
-
 // Moves enemy using enemy_direction.
 // If enemy is at the edge of the screen, flip enemy_direction.
 void move_enemy(struct object *ob_ptr, struct gamestate *state)
@@ -776,7 +788,7 @@ void move_enemy(struct object *ob_ptr, struct gamestate *state)
 
     // Draw enemy at new location and erase at old location.
     draw_image((*state).background, grid_to_pixel_x(oldx, (*state).width), grid_to_pixel_y(oldy, (*state).height));
-    draw_grid(*ob_ptr, (*state).width, (*state).height);
+    draw_grid(ob_ptr, (*state).width, (*state).height);
     
     // If old location corresponds to a trampled pack, vehicle, or exit, set trampled to false for that object.
     if (oldx == (*state).exit.loc.x && oldy == (*state).exit.loc.y && (*state).exit.trampled) (*state).exit.trampled = 0;
@@ -912,53 +924,17 @@ int main()
     init_snes_lines();
     fb_init();
 
-    /*
-    // Clear the screen before we begin...
-    for (int i = 0; i < state.width; ++i) {
-        for (int j = 0; j < state.height; ++j) {
-            myDrawImage(black_image.pixel_data, black_image.width, black_image.height, i * (SCREENWIDTH / state.width), j * (SCREENWIDTH / state.height));
-        }
-    }
-    */
-
     /////////////////////////////////
     // START MENU - BASICALLY DONE //
     /////////////////////////////////
 
     struct startMenu sm;
     struct gamestate state;
+    int start_flag;
 
 start_menu:
-    sm.startGameSelected = 1;
-    sm.quitGameSelected = 0;
-    int start_flag = 0;
 
-    // Draw rectangle border...
-    drawRect(SCREENWIDTH / 2 - 100, SCREENHEIGHT / 2 - 100, SCREENWIDTH / 2 + 100, SCREENHEIGHT / 2 + 100, 0xF, 0);
-
-    while (start_flag == 0)
-    {
-        // Display selection options with currently selected option being pointed to...
-        if (sm.startGameSelected)
-        {
-            drawString(SCREENWIDTH / 2 - 50, SCREENHEIGHT / 2 - 25, "-> START GAME", 0xF);
-            drawString(SCREENWIDTH / 2 - 50, SCREENHEIGHT / 2 + 25, "   QUIT GAME", 0xF);
-        }
-        else if (sm.quitGameSelected)
-        {
-            drawString(SCREENWIDTH / 2 - 50, SCREENHEIGHT / 2 - 25, "   START GAME", 0xF);
-            drawString(SCREENWIDTH / 2 - 50, SCREENHEIGHT / 2 + 25, "-> QUIT GAME", 0xF);
-        }
-        // Loop while startMenuSelectOption returns 0 - so breaks when player presses
-        // A on either start or quit option.
-        read_SNES(buttons);
-        // Pass address of sm so that flag attributes can be modified by function.
-        // Function will automatically erase text when selection moves up/down.
-        start_flag = startMenuSelectOption(buttons, &sm);
-    }
-
-    // Erase selection menu from screen...
-    drawRect(SCREENWIDTH / 2 - 100, SCREENHEIGHT / 2 - 100, SCREENWIDTH / 2 + 100, SCREENHEIGHT / 2 + 100, 0x0, 1);
+    start_flag = start_menu(&sm, buttons);
 
     if (start_flag == -1)
     {
@@ -1218,122 +1194,18 @@ first_stage:
         // Read controller.
         read_SNES(buttons);
 
-        ////////////////
-        // PAUSE MENU //
-        ////////////////
-
         // If start has been pressed, enter pause menu...
-        if (buttons[4 - 1] == 0)
-        {
-            int restart_pressed = 1;
-            int pressed_a = 0;
-            wait(500000); // Wait for a bit to stop menu from immediately closing.
-
-            // Draw white rectangle border and black rectangle fill...
-            drawRect(SCREENWIDTH / 2 - 75, SCREENHEIGHT / 2 - 50, SCREENWIDTH / 2 + 200, SCREENHEIGHT / 2 + 100, 0x0, 1);
-            drawRect(SCREENWIDTH / 2 - 75, SCREENHEIGHT / 2 - 50, SCREENWIDTH / 2 + 200, SCREENHEIGHT / 2 + 100, 0xF, 0);
-
-            while (!pressed_a)
-            {
-                // First, display pause menu...
-
-                if (restart_pressed)
-                {
-                    drawString(SCREENWIDTH / 2, SCREENHEIGHT / 2, "-> RESTART GAME", 0xF);
-                    drawString(SCREENWIDTH / 2, SCREENHEIGHT / 2 + 50, "   QUIT GAME", 0xF);
-                }
-                else
-                {
-                    drawString(SCREENWIDTH / 2, SCREENHEIGHT / 2, "   RESTART GAME", 0xF);
-                    drawString(SCREENWIDTH / 2, SCREENHEIGHT / 2 + 50, "-> QUIT GAME", 0xF);
-                }
-
-                // Read controller...
-                read_SNES(buttons);
-
-                // If start is pressed again, wait for a bit and then break (to prevent pause
-                // menu from immediately opening again).
-                if (buttons[4 - 1] == 0)
-                {
-                    wait(500000);
-                    break;
-                }
-
-                else if (buttons[5 - 1] == 0)
-                {
-                    // Up is pressed.
-                    restart_pressed = 1;
-                }
-
-                else if (buttons[6 - 1] == 0)
-                {
-                    // Down is pressed.
-                    restart_pressed = 0;
-                }
-
-                else if (buttons[9 - 1] == 0)
-                {
-                    // A is pressed, execute current selection.
-                    pressed_a = 1;
-                }
-            }
-
-            // Erase pause menu...
-            drawRect(SCREENWIDTH / 2 - 75, SCREENHEIGHT / 2 - 50, SCREENWIDTH / 2 + 200, SCREENHEIGHT / 2 + 100, 0x0, 1);
-            drawString(SCREENWIDTH / 2, SCREENHEIGHT / 2, "                ", 0xF);
-            drawString(SCREENWIDTH / 2, SCREENHEIGHT / 2 + 50, "              ", 0xF);
-
-            if (pressed_a)
-            {
-                // Execute current selection. Otherwise, start was pressed to exit game menu and
-                // we continue playing the game.
-
-                // No matter what was selected, we should erase the game state before either restarting or exiting.
-
-                // Erase DK...
-                draw_image(state.background, grid_to_pixel_x(state.dk.loc.x, state.width), grid_to_pixel_y(state.dk.loc.y, state.height));
-
-                // Erase each enemy...
-                for (int i = 0; i < state.num_enemies; ++i)
-                {
-                    draw_image(state.background, grid_to_pixel_x(state.enemies[i].loc.x, state.width), grid_to_pixel_y(state.enemies[i].loc.y, state.height));
-                }
-
-                // Erase each pack...
-                for (int i = 0; i < state.num_packs; ++i)
-                {
-                    draw_image(state.background, grid_to_pixel_x(state.packs[i].loc.x, state.width), grid_to_pixel_y(state.packs[i].loc.y, state.height));
-                }
-
-                // Erase each vehicle...
-                for (int i = 0; i < state.num_vehicles; ++i)
-                {
-                    draw_image(state.background, grid_to_pixel_x(state.vehicles[i].start.loc.x, state.width), grid_to_pixel_y(state.vehicles[i].start.loc.y, state.height));
-                    draw_image(state.background, grid_to_pixel_x(state.vehicles[i].finish.loc.x, state.width), grid_to_pixel_y(state.vehicles[i].finish.loc.y, state.height));
-                }
-
-                // Erase exit...
-                draw_image(state.background, grid_to_pixel_x(state.exit.loc.x, state.width), grid_to_pixel_y(state.exit.loc.y, state.height));
-
-                // Erase time, score, lives before terminating...
-                drawString(SCREENWIDTH - 200, FONT_HEIGHT, "       ", 0xF);     // Erase "SCORE:"
-                drawString(SCREENWIDTH - 200, 2 * FONT_HEIGHT, "      ", 0xF);  // Erase "TIME:"
-                drawString(SCREENWIDTH - 200, 3 * FONT_HEIGHT, "       ", 0xF); // ERASE "LIVES:"
-
-                // Erase numbers (big buffer used, during testing time counter has been holding some crazy values):
-                drawString(SCREENWIDTH - 100, FONT_HEIGHT, "                        ", 0xF);
-                drawString(SCREENWIDTH - 100, 2 * FONT_HEIGHT, "                        ", 0xF);
-                drawString(SCREENWIDTH - 100, 3 * FONT_HEIGHT, "                        ", 0xF);
-
-                if (restart_pressed)
-                    goto first_stage; // Restart first level.
-                else
-                {
-                    drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT / 2, "Exiting...", 0xF);
-                    wait(2000000);
-                    drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT / 2, "          ", 0xF);
-                    return 1;
-                }
+        if (buttons[4 - 1] == 0) {
+            int exit_game = pause_menu(buttons, &state);
+            // If exit_game selected, print message and exit.
+            if (exit_game == 1) {
+                drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT / 2, "Exiting...", 0xF);
+                wait(2000000);
+                drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT / 2, "          ", 0xF);
+                return 1;
+            } else if (exit_game == 2) {
+                // Restart from first stage.
+                goto first_stage;
             }
         }
 
@@ -1559,72 +1431,8 @@ first_stage:
             state.exit.exists = 0;
         }
 
-        // Draw the game state... (have to insert function body)
-
-        // Drawing of DK moved to DKmove - stops DK from disappearing when a button is held down.
-        // Draw DK...
-        // draw_image(state.dk.sprite, state.dk.loc.x * (SCREENWIDTH / state.width), state.dk.loc.y * (SCREENHEIGHT / state.height));
-
-        //draw_state(&state);
-
-        // Draw each enemy...
-        for (int i = 0; i < state.num_enemies; ++i)
-        {
-            if (state.enemies[i].exists)
-            {
-                draw_grid(state.enemies[i], state.width, state.height);
-                // draw_image(state.enemies[i].sprite, state.enemies[i].loc.x * (SCREENWIDTH / state.width), state.enemies[i].loc.y * (SCREENHEIGHT / state.height));
-                
-                // Check to see if any enemies WHICH EXIST are on the same tile as a pack or a vehicle.
-            }
-        }
-
-        // Draw each pack...
-        for (int i = 0; i < state.num_packs; ++i)
-        {
-            if (state.packs[i].exists)
-                draw_grid(state.packs[i], state.width, state.height);
-            // draw_image(state.packs[i].sprite, state.packs[i].loc.x * (SCREENWIDTH / state.width), state.packs[i].loc.y * (SCREENHEIGHT / state.height));
-        }
-
-        // Draw each vehicle...
-        for (int i = 0; i < state.num_vehicles; ++i)
-        {
-            // Draw start...
-            draw_grid(state.vehicles[i].start, state.width, state.height);
-            // draw_image(state.vehicles[i].start.sprite, state.vehicles[i].start.loc.x * (SCREENWIDTH / state.width), state.vehicles[i].start.loc.y * (SCREENHEIGHT / state.height));
-            //  Draw finish...
-            draw_grid(state.vehicles[i].finish, state.width, state.height);
-            // draw_image(state.vehicles[i].finish.sprite, state.vehicles[i].finish.loc.x * (SCREENWIDTH / state.width), state.vehicles[i].finish.loc.y * (SCREENHEIGHT / state.height));
-        }
-
-        // Draw the exit...
-        draw_grid(state.exit, state.width, state.height);
-        // draw_image(state.exit.sprite, state.exit.loc.x * (SCREENWIDTH / state.width), state.exit.loc.y * (SCREENHEIGHT / state.height));
-
-        // Update and print score...
-        state.score = state.time + (250000 * state.lives) + (250000 * state.dk.num_coins_grabbed);
-        draw_int(state.score, SCREENWIDTH, FONT_HEIGHT, 0xF);
-        drawString(SCREENWIDTH - 200, FONT_HEIGHT, "SCORE:", 0xF);
-
-        // Update and print time remaining...
-
-        // First calculate time elapsed by this iteration of loop.
-        time0 = (*clo - time0) / 1000; // time0 is time elapsed in thousandths of a second.
-        state.time -= time0;
-
-        // If state.time is now leq 0, set loseflag.
-        if (state.time <= 0)
-            state.loseflag = 1;
-
-        draw_int(state.time, SCREENWIDTH, 2 * FONT_HEIGHT, 0xF);
-        drawString(SCREENWIDTH - 200, 2 * FONT_HEIGHT, "TIME:", 0xF);
-
-        // Print lives remaining... (replace with hearts later)
-        draw_int(state.lives, SCREENWIDTH, 3 * FONT_HEIGHT, 0xF);
-        drawString(SCREENWIDTH - 200, 3 * FONT_HEIGHT, "LIVES:", 0xF);
-
-        // End of drawing game state.
+        // draw game state.
+        draw_state(&state);
     }
 
     // First stage exited...
