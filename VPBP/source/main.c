@@ -2,8 +2,8 @@
 #include "uart.h"
 #include "fb.h"
 
-#include <stdio.h>
-#include <unistd.h>
+//#include <stdio.h>
+//#include <unistd.h>
 
 // include images
 // #include "dk_image.h"
@@ -364,49 +364,49 @@ void draw_image(struct image myimg, int offx, int offy)
 // Main drawing method - draws a game state.
 // Coordinates of all objects are in grid coords, so need to convert these to pixel
 // coords in order to draw.
-void draw_state(struct gamestate state)
+void draw_state(struct gamestate * state)
 {
 
     // First, draw background at the origin...
-    // draw_image(state.background, 0, 0);
+    // draw_image(state->background, 0, 0);
 
     // Draw DK...
-    draw_image(state.dk.sprite, state.dk.loc.x * (SCREENWIDTH / state.width), state.dk.loc.y * (SCREENHEIGHT / state.height));
+    draw_image(state->dk.sprite, state->dk.loc.x * (SCREENWIDTH / state->width), state->dk.loc.y * (SCREENHEIGHT / state->height));
 
     // Draw each enemy...
-    for (int i = 0; i < state.num_enemies; ++i)
+    for (int i = 0; i < state->num_enemies; ++i)
     {
-        // Print state.enemies[i] with grid coords (x, y) at location (x * SCREENWIDTH/state.width, y * SCREENHEIGHT/state.height)
-        draw_image(state.enemies[i].sprite, state.enemies[i].loc.x * (SCREENWIDTH / state.width), state.enemies[i].loc.y * (SCREENHEIGHT / state.height));
+        // Print state->enemies[i] with grid coords (x, y) at location (x * SCREENWIDTH/state->width, y * SCREENHEIGHT/state->height)
+        draw_image(state->enemies[i].sprite, state->enemies[i].loc.x * (SCREENWIDTH / state->width), state->enemies[i].loc.y * (SCREENHEIGHT / state->height));
     }
 
     // Draw each pack...
-    for (int i = 0; i < state.num_packs; ++i)
+    for (int i = 0; i < state->num_packs; ++i)
     {
-        // Print state.packs[i] with grid coords (x, y) at location (x * SCREENWIDTH/state.width, y * SCREENHEIGHT/state.height)
-        if (state.packs[i].exists)
-            draw_image(state.packs[i].sprite, state.packs[i].loc.x * (SCREENWIDTH / state.width), state.packs[i].loc.y * (SCREENHEIGHT / state.height));
+        // Print state->packs[i] with grid coords (x, y) at location (x * SCREENWIDTH/state->width, y * SCREENHEIGHT/state->height)
+        if (state->packs[i].exists)
+            draw_image(state->packs[i].sprite, state->packs[i].loc.x * (SCREENWIDTH / state->width), state->packs[i].loc.y * (SCREENHEIGHT / state->height));
     }
 
     // Draw each vehicle...
-    for (int i = 0; i < state.num_vehicles; ++i)
+    for (int i = 0; i < state->num_vehicles; ++i)
     {
         // Draw start...
-        draw_image(state.vehicles[i].start.sprite, state.vehicles[i].start.loc.x * (SCREENWIDTH / state.width), state.vehicles[i].start.loc.y * (SCREENHEIGHT / state.height));
+        draw_image(state->vehicles[i].start.sprite, state->vehicles[i].start.loc.x * (SCREENWIDTH / state->width), state->vehicles[i].start.loc.y * (SCREENHEIGHT / state->height));
         // Draw finish...
-        draw_image(state.vehicles[i].finish.sprite, state.vehicles[i].finish.loc.x * (SCREENWIDTH / state.width), state.vehicles[i].finish.loc.y * (SCREENHEIGHT / state.height));
+        draw_image(state->vehicles[i].finish.sprite, state->vehicles[i].finish.loc.x * (SCREENWIDTH / state->width), state->vehicles[i].finish.loc.y * (SCREENHEIGHT / state->height));
     }
 
     // Print score...
-    draw_int(state.score, SCREENWIDTH, FONT_HEIGHT, 0xF);
+    draw_int((*state).score, SCREENWIDTH, FONT_HEIGHT, 0xF);
     drawString(SCREENWIDTH - 200, FONT_HEIGHT, "SCORE:", 0xF);
 
     // Print time remaining...
-    draw_int(state.time, SCREENWIDTH, 2 * FONT_HEIGHT, 0xF);
+    draw_int((*state).time, SCREENWIDTH, 2 * FONT_HEIGHT, 0xF);
     drawString(SCREENWIDTH - 200, 2 * FONT_HEIGHT, "TIME:", 0xF);
 
     // Print lives remaining... (replace with hearts later)
-    draw_int(state.lives, SCREENWIDTH, 3 * FONT_HEIGHT, 0xF);
+    draw_int((*state).lives, SCREENWIDTH, 3 * FONT_HEIGHT, 0xF);
     drawString(SCREENWIDTH - 200, 3 * FONT_HEIGHT, "LIVES:", 0xF);
 }
 
@@ -627,18 +627,6 @@ void DKmove(int *buttons, struct gamestate *state)
         draw_image((*state).background, grid_to_pixel_x(oldx, (*state).width), grid_to_pixel_y(oldy, (*state).height));
     }
 
-    if (pressed == 0)
-    {
-        if ((*state).dk.enemy_direction == 1)
-        {
-            (*state).dk.sprite.img = dk_right0.pixel_data;
-        }
-        else if ((*state).dk.enemy_direction == 0)
-        {
-            (*state).dk.sprite.img = dk_left0.pixel_data;
-        }
-    }
-
     // Draw DK at his new location...
     draw_grid((*state).dk, (*state).width, (*state).height);
     // draw_image((*state).dk.sprite, (*state).dk.loc.x * (SCREENWIDTH / (*state).width), (*state).dk.loc.y * (SCREENHEIGHT / (*state).height));
@@ -663,7 +651,6 @@ void DKmove(int *buttons, struct gamestate *state)
         draw_int((*state).time, SCREENWIDTH, 2 * FONT_HEIGHT, 0xF);
         // drawString(SCREENWIDTH - 200, 2*FONT_HEIGHT, "TIME:", 0xF);
     }
-    uart_puts("Unpressed");
 }
 
 /*
@@ -881,6 +868,7 @@ void updateBoomerang(struct gamestate *state)
     {
         if ((*state).boomerang.loc.x == (*state).enemies[i].loc.x && (*state).boomerang.loc.y == (*state).enemies[i].loc.y)
         {
+            uart_puts("HIT");
             (*state).boomerang.register_hit;
             (*state).enemies[i].exists = 0;
             if ((*state).boomerang.direction == 1)
@@ -896,26 +884,17 @@ void updateBoomerang(struct gamestate *state)
     // If boomerang hits either edge of the map, reverse direction
     if ((*state).boomerang.loc.x == 0)
     {
-        if ((*state).boomerang.direction == 1)
-        {
-            (*state).boomerang.direction == 0;
-        }
-        else if ((*state).boomerang.direction == 0)
-        {
-            (*state).boomerang.direction == 1;
-        }
+        uart_puts("Left wall\n");
+        (*state).boomerang.direction == 1;
+    
     }
-    else if ((*state).boomerang.loc.x == 0)
+    else if ((*state).boomerang.loc.x == (*state).width)
     {
-        if ((*state).boomerang.direction == 1)
-        {
-            (*state).boomerang.direction == 0;
-        }
-        else if ((*state).boomerang.direction == 0)
-        {
-            (*state).boomerang.direction == 1;
-        }
+        uart_puts("Right wall\n");
+        (*state).boomerang.direction == 0;
     }
+
+    draw_int((*state).boomerang.direction, 100, 100, 0xF);
 
     // Check if boomerang has hit dk. If so, dk now "has Boomerang", boomerang object does not exist.
     if ((*state).boomerang.loc.x == (*state).dk.loc.x && (*state).boomerang.loc.y == (*state).dk.loc.y)
@@ -943,7 +922,7 @@ void updateBoomerang(struct gamestate *state)
         draw_image((*state).boomerang.sprite, grid_to_pixel_x((*state).boomerang.loc.x, (*state).width), grid_to_pixel_y((*state).boomerang.loc.y, (*state).height));
     }
     // Draw boomerang if previous position is not dk's position (as to not erase dk)
-    else if (oldx != (*state).dk.loc.x)
+    if (oldx != (*state).dk.loc.x)
     {
         draw_image((*state).background, grid_to_pixel_x(oldx, (*state).width), grid_to_pixel_y(oldy, (*state).height));
     }
@@ -1139,6 +1118,7 @@ first_stage:
     state.dk.speed = 1;
     state.dk.dk_immunity = 0;
     state.dk.num_coins_grabbed = 0;
+    state.dk.has_boomerang = 0;
     
     state.dk.trampled = 0;
 
@@ -1615,16 +1595,19 @@ first_stage:
         }
 
         // Boomerang logic
-        if (state.dk.has_boomerang)
+        if (buttons[8] == 0)
+        
         {
             // draw_image() underneath score, boomerang icon
-            read_SNES(buttons);
-            if (buttons[8] == 0)
+            if (state.dk.has_boomerang)
             {
+                
                 if (state.dk.enemy_direction != 2)
                 {
+                    uart_puts("Thrown\n");
                     state.boomerang.direction = state.dk.enemy_direction;
                     state.boomerang.loc = state.dk.loc;
+                    state.dk.has_boomerang = 0;
                     state.boomerang.exists = 1;
                 }
             }
@@ -1635,8 +1618,12 @@ first_stage:
             if (boomerang_reference + (enemy_move_reference_time / state.boomerang.tiles_per_second) <= time0)
             {
                 updateBoomerang(&state);
+                if (state.boomerang.direction) uart_puts("Right\n");
+                else uart_puts("Left\n");
             }
         }
+
+        draw_int(state.boomerang.direction, 200, 200, 0xF);
 
         // Check to see if DK has reached the exit, set winflag if he has...
         if (state.dk.loc.x == state.exit.loc.x && state.dk.loc.y == state.exit.loc.y)
@@ -1650,6 +1637,8 @@ first_stage:
         // Drawing of DK moved to DKmove - stops DK from disappearing when a button is held down.
         // Draw DK...
         // draw_image(state.dk.sprite, state.dk.loc.x * (SCREENWIDTH / state.width), state.dk.loc.y * (SCREENHEIGHT / state.height));
+
+        draw_state(&state);
 
         // Draw each enemy...
         for (int i = 0; i < state.num_enemies; ++i)
