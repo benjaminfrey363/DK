@@ -1266,7 +1266,7 @@ first_stage:
         if (buttons[4 - 1] == 0) {
             int exit_game = pause_menu(buttons, &state);
             // If exit_game selected, print message and exit.
-            if (exit_game) {
+            if (exit_game == 1) {
                 drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT / 2, "Exiting...", 0xF);
                 wait(2000000);
                 drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT / 2, "          ", 0xF);
