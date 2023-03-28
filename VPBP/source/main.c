@@ -479,7 +479,7 @@ int startMenuSelectOption(int *buttons, struct startMenu *start)
 
 // Draws start menu, runs start menu selection process.
 // Returns start_flag - equal to 1 if start was selected, -1 if quit was selected.
-int start_menu(startMenu *sm, int *buttons) {
+int start_menu(struct startMenu *sm, int *buttons) {
     sm->startGameSelected = 1;
     sm->quitGameSelected = 0;
     int start_flag = 0;
@@ -515,7 +515,8 @@ int start_menu(startMenu *sm, int *buttons) {
 }
 
 
-int pause_menu(int *buttons, struct gamestate state) {
+// Returns 0 to return to gameplay, 1 to exit game, 2 to restart.
+int pause_menu(int *buttons, struct gamestate *state) {
     int restart_pressed = 1;
     int pressed_a = 0;
     int exit_game = 0;
@@ -613,7 +614,7 @@ int pause_menu(int *buttons, struct gamestate state) {
         drawString(SCREENWIDTH - 100, 2 * FONT_HEIGHT, "                        ", 0xF);
         drawString(SCREENWIDTH - 100, 3 * FONT_HEIGHT, "                        ", 0xF);
 
-        if (restart_pressed) goto first_stage; // Restart first level.
+        if (restart_pressed) exit_game = 2; // Restart first level.
         else {
             drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT / 2, "Exiting...", 0xF);
             wait(2000000);
@@ -761,7 +762,7 @@ void DKmove(int *buttons, struct gamestate *state)
     }
 
     // Draw DK at his new location...
-    draw_grid((*state).dk, (*state).width, (*state).height);
+    draw_grid(&((*state).dk), (*state).width, (*state).height);
     // draw_image((*state).dk.sprite, (*state).dk.loc.x * (SCREENWIDTH / (*state).width), (*state).dk.loc.y * (SCREENHEIGHT / (*state).height));
 
     // Wait for pressed joypad button to be unpressed before function can be exited
@@ -815,7 +816,7 @@ void move_enemy(struct object *ob_ptr, struct gamestate *state)
 
     // Draw enemy at new location and erase at old location.
     draw_image((*state).background, grid_to_pixel_x(oldx, (*state).width), grid_to_pixel_y(oldy, (*state).height));
-    draw_grid(*ob_ptr, (*state).width, (*state).height);
+    draw_grid(ob_ptr, (*state).width, (*state).height);
     
     // If old location corresponds to a trampled pack, vehicle, or exit, set trampled to false for that object.
     if (oldx == (*state).exit.loc.x && oldy == (*state).exit.loc.y && (*state).exit.trampled) (*state).exit.trampled = 0;
@@ -961,10 +962,11 @@ int main()
 
     struct startMenu sm;
     struct gamestate state;
+    int start_flag;
 
 start_menu:
 
-    int start_flag = start_menu(&sm, buttons);
+    start_flag = start_menu(&sm, buttons);
 
     if (start_flag == -1)
     {
@@ -1262,13 +1264,16 @@ first_stage:
 
         // If start has been pressed, enter pause menu...
         if (buttons[4 - 1] == 0) {
-            int exit_game = pause_menu(buttons, *state);
+            int exit_game = pause_menu(buttons, &state);
             // If exit_game selected, print message and exit.
             if (exit_game) {
                 drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT / 2, "Exiting...", 0xF);
                 wait(2000000);
                 drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT / 2, "          ", 0xF);
                 return 1;
+            } else if (exit_game == 2) {
+                // Restart from first stage.
+                goto first_stage;
             }
         }
 
@@ -1428,7 +1433,7 @@ first_stage:
 
                 // Draw enemy at new location and erase at old location.
                 draw_image(state.background, grid_to_pixel_x(oldx, state.width), grid_to_pixel_y(oldy, state.height));
-                draw_grid(state.enemies[i], state.width, state.height);
+                draw_grid(&(state.enemies[i]), state.width, state.height);
                 
                 // If old location corresponds to a trampled pack, vehicle, or exit, set trampled to false for that object.
                 if (oldx == state.exit.loc.x && oldy == state.exit.loc.y && state.exit.trampled) state.exit.trampled = 0;
