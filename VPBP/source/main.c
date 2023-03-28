@@ -381,20 +381,20 @@ void draw_state(struct gamestate * state, unsigned int init_time) {
     {
         // Print state->packs[i] with grid coords (x, y) at location (x * SCREENWIDTH/state->width, y * SCREENHEIGHT/state->height)
         if (state->packs[i].exists)
-            draw_grid(state->packs[i], state->width, state->height);
+            draw_grid(&(state->packs[i]), state->width, state->height);
     }
 
     // Draw each vehicle...
     for (int i = 0; i < state->num_vehicles; ++i)
     {
         // Draw start...
-        draw_grid(state->vehicles[i].start, state->width, state->height);
+        draw_grid(&(state->vehicles[i].start), state->width, state->height);
         // Draw finish...
-        draw_grid(state->vehicles[i].finish, state->width, state->height);
+        draw_grid(&(state->vehicles[i].finish), state->width, state->height);
     }
 
     // Draw the exit...
-    draw_grid(state->exit, state->width, state->height);
+    draw_grid(&(state->exit), state->width, state->height);
 
     // Update and print score...
     state->score = state->time + (250000 * state->lives) + (250000 * state->dk.num_coins_grabbed);
@@ -428,7 +428,7 @@ void black_screen(struct gamestate *state)
     {
         for (int j = 0; j < state->height; ++j)
         {
-            myDrawImage(black_image.pixel_data, black_image.width, black_image.height, grid_to_pixel_x(i, *state), grid_to_pixel_y(j, *state));
+            myDrawImage(black_image.pixel_data, black_image.width, black_image.height, grid_to_pixel_x(i, state->width), grid_to_pixel_y(j, state->height));
         }
     }
 }
