@@ -494,13 +494,7 @@ int pause_menu(int *buttons, struct gamestate *state) {
 // MOVEMENT FUNCTIONS //
 ////////////////////////
 
-/*
- * This method will be called in response to a directional input from the SNES controller.
- * int direction () can be changed to be the direct output from the controller instead of
- * converting the input to an integer. A directional input will check to ensure that DK
- * will still be on the screen and will not collide hit with an object.
- */
-
+// Moves DK based on buttons pressed in passed array.
 void DKmove(int *buttons, struct gamestate *state)
 {
 
@@ -567,7 +561,7 @@ void DKmove(int *buttons, struct gamestate *state)
         draw_image((*state).background, grid_to_pixel_x(oldx, (*state).width), grid_to_pixel_y(oldy, (*state).height));
     }
 
-    // Draw DK at his new location...
+    // Regardless of whether DK moved, draw him at his new location...
     draw_grid(&((*state).dk), (*state).width, (*state).height);
     // draw_image((*state).dk.sprite, (*state).dk.loc.x * (SCREENWIDTH / (*state).width), (*state).dk.loc.y * (SCREENHEIGHT / (*state).height));
 
