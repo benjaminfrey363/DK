@@ -50,9 +50,11 @@ struct object
     int boomerang_pack;
 
     int has_boomerang;
+
+    int on_Platform;
     // Boolean used for packs and exits, removes them from the map after DK collides with them.
     int exists;
-    
+
     // Boolean used to indicate that an enemy has collided with a pack, a vehicle, or an exit.
     int trampled;
 };
@@ -111,7 +113,7 @@ struct gamestate
     // Also track dk.
     struct object dk;
 
-    int map_tiles[25*25];
+    int map_tiles[25 * 25];
 
     int map_selection; // Used to select the current map.
 
