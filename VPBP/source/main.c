@@ -1,7 +1,3 @@
-#include "gpio.h"
-#include "uart.h"
-#include "fb.h"
-
 //#include <stdio.h>
 //#include <unistd.h>
 
@@ -29,6 +25,9 @@
 #include "heartpack.h"
 #include "coinpack.h"
 
+#include "structures.c"
+#include "init_gpio.c"
+
 #define MAXOBJECTS 30
 #define SCREENWIDTH 1888
 #define SCREENHEIGHT 1000
@@ -40,265 +39,8 @@
 #define FONT_WIDTH 8
 #define FONT_HEIGHT 8
 
-// GPIO macros
-
-#define GPIO_BASE 0xFE200000
-#define CLO_REG 0xFE003004
-#define GPSET0_s 7
-#define GPCLR0_s 10
-#define GPLEV0_s 13
-
-#define CLK 11
-#define LAT 9
-#define DAT 10
-
-#define INP_GPIO(p) *(gpio + ((p) / 10)) &= ~(7 << (((p) % 10) * 3))
-#define OUT_GPIO(p) *(gpio + ((p) / 10)) |= (1 << (((p) % 10) * 3))
-
-unsigned int *gpio = (unsigned *)GPIO_BASE;
-unsigned int *clo = (unsigned *)CLO_REG;
-
-///////////////////////////////
-// Init GPIO Code from Dylan //
-///////////////////////////////
-
-#define INPUT 0b000
-#define OUTPUT 0b001
-
-void init_gpio(int pin, int func)
-{
-    // find the index / corresponding function select register for the pin
-    // -> hint: 10 pins per rgister
-    // 16 / 10 -> 1.6 -> 1
-    // 23 / 10 -> 2
-    int index = pin / 10; // tell us which GPFSEL register to use
-
-    int bit_shift = (pin % 10) * 3; // bit shift we want to mask out / replace
-
-    // gpio[index] = gpio[index] & ~(0b111 << bit_shift);
-    // right now: we have the gpio function select register, with
-    // the bits for our function cleared.
-    // the last thing to do is actually set these bits to funciton
-    gpio[index] = (gpio[index] & ~(0b111 << bit_shift)) | (func << bit_shift);
-}
-
-// val is either 0 (for clearing) or 1 (for setting)
-void write_gpio(int pin_number, int val)
-{
-    // find which register we want to modify
-
-    // so if val is 0 -> we want to set a bit in clear registers
-    // if val is 1 -> we want to set a bit in the set registers
-
-    // it's kind of like a latch where we have to send a 1 to reset to clear it, and a 1 to data to write to it.
-
-    if (val == 1)
-    {
-        // if val is 1 -> we want to set a bit in the set registers
-        // you would want to check if the pin >= 32
-        // if this was the case, target_addr = set register 1
-        (*GPSET0) = 1 << pin_number;
-    }
-    else
-    {
-        (*GPCLR0) = 1 << pin_number;
-    }
-}
-
-int read_gpio(int pin_number)
-{
-    // GPLEV0 encodes the first 0-31 GPIO pin values
-    // to read pin x, we shift right by x so GPIO pin value x is at bit 0.
-    // then, we can and with 1 to delete the rest of the data.
-
-    return ((*GPLEV0) >> pin_number) & 1;
-}
-
-void init_snes_lines()
-{
-    // initialize GPIO lines for CLK, DAT, LAT
-    // set CLK and LAT to outputs (we write to these)
-    init_gpio(CLK, OUTPUT);
-    init_gpio(LAT, OUTPUT);
-    // set DATA as an input (we read the SNES buttons from)
-    init_gpio(DAT, INPUT);
-}
-
-void wait(int dur)
-{
-    unsigned c = *clo + dur;
-    while (c > *clo)
-        ;
-}
-
-// Read SNES using method from lecture.
-// Returns 1 if any button has been pressed, 0 if not.
-int read_SNES(int *array)
-{
-    int data;
-
-    write_gpio(CLK, 1);
-    write_gpio(LAT, 1);
-    wait(12);
-
-    write_gpio(LAT, 0);
-
-    // flag will be turned on if we read 0 from any button.
-    int flag = 0;
-
-    int i = 1;
-    while (i <= 16)
-    {
-        wait(6);
-        write_gpio(CLK, 0);
-        wait(6);
-        data = read_gpio(DAT);
-        array[i - 1] = data;
-        if (data == 0)
-        {
-            flag = 1;
-        }
-        write_gpio(CLK, 1);
-        ++i;
-    }
-
-    return flag;
-}
-
-////////////////////////
-// END OF DYLANS CODE //
-////////////////////////
-
 // Array to track which buttons have been pressed;
 int buttons[16];
-
-////////////////
-// STRUCTURES //
-////////////////
-
-// Defines structure of a printable image.
-//
-// An image tracks an unsigned character array, a width, and a height.
-struct image
-{
-    unsigned char *img;
-    int width;
-    int height;
-};
-
-// Structure to track object coordinates.
-struct coord
-{
-    int x; // Horz coordinate
-    int y; // Vert coordinate
-};
-
-// Defines object structure.
-//
-// An instance of object contains a sprite, a flag indicating collision
-// with another object (not used yet), and a coordinate.
-struct object
-{
-    // The fundamental traits of an object are a sprite and a location, all other
-    // variables are used by different extensions of an object.
-    struct image sprite; // sprite.
-    struct coord loc;    // Coordinate location.
-
-    // Speed variable for moving objects.
-    int speed;
-
-    // enemy_direction determines which direction moving enemies will walk.
-    // 0 for left, 1 for right.
-    int enemy_direction;
-
-    // Immunity flag, only used for dk.
-    int dk_immunity;
-    // Counts number of point packs picked up, only used for DK.
-    int num_coins_grabbed;
-
-    // Pack type flags, only used for packs.
-    int health_pack;
-    int point_pack;
-    int boomerang_pack;
-
-    int has_boomerang;
-    // Boolean used for packs and exits, removes them from the map after DK collides with them.
-    int exists;
-    
-    // Boolean used to indicate that an enemy has collided with a pack, a vehicle, or an exit.
-    int trampled;
-};
-
-// Vehicle structure - effectively teleports DK between cells.
-struct vehicle
-{
-    struct object start;
-    struct object finish;
-
-    // Boolean indicating whether vehicle can be traversed finish -> start as well.
-    int bidirectional;
-};
-
-struct projectile
-{
-    int tiles_per_second; // Number of grid panels travelled per second
-    int register_hit;     // becomes true when projectile hits an enemy
-    int exists;           // boolean to show existence of projectile
-    int direction;
-
-    struct image sprite;
-    struct coord loc;
-};
-
-// Gamestate structure
-struct gamestate
-{
-    int width;
-    int height;
-
-    int score;
-    int lives;
-    int time;
-
-    // Also track background image...
-    struct image background;
-
-    // Tracks an array of enemies and packs.
-    struct object enemies[MAXOBJECTS];
-    int num_enemies; // Actual # of enemies in world.
-
-    // Tracks an array of packs as well.
-    struct object packs[MAXOBJECTS];
-    int num_packs; // Actual # of packs in world.
-
-    // Also tracks an array of vehicles.
-    struct vehicle vehicles[MAXOBJECTS];
-    int num_vehicles;
-
-    // Tracks a boomerang object
-    struct projectile boomerang;
-
-    // Also track dk.
-    struct object dk;
-
-    int map_tiles[25*25];
-
-    int map_selection; // Used to select the current map.
-
-    // Flags.
-    int winflag;
-    int loseflag;
-
-    // Exit structure - DK colliding with exit causes win flag to be set.
-    struct object exit;
-};
-
-struct startMenu
-{
-    int startGameSelected;
-    int quitGameSelected;
-};
-
 
 int map1[625] = {
    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,
@@ -904,7 +646,7 @@ void checkDKCollisions(struct gamestate *state) {
                 if (state->dk.loc.x == state->enemies[i].loc.x && state->dk.loc.y == state->enemies[i].loc.y)
                 {
                     --state->lives;
-                    printf("Lost a life\n");
+                    // printf("Lost a life\n");
                     // Give DK immunity - he can't be hurt until he leaves this cell.
                     state->dk.dk_immunity = 1;
                     // Set lose flag if out of lives.
