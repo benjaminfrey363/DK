@@ -88,8 +88,10 @@ struct gamestate
     int lives;
     int time;
 
-    // Also track background image...
+    // Tracks background images, platform images, ladder images.
     struct image background;
+    struct image platform;
+    struct image ladder;
 
     // Tracks an array of enemies and packs.
     struct object enemies[MAXOBJECTS];

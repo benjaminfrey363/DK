@@ -60,7 +60,10 @@
 unsigned int *gpio = (unsigned *)GPIO_BASE;
 unsigned int *clo = (unsigned *)CLO_REG;
 
+// Some method signatures...
 void erase_state(struct gamestate *state);
+int is_valid_cell(int x, int y, struct gamestate *state);
+// void myDrawImage(unsigned char * img, int width, int height, int offx, int offy);
 
 ///////////////////////////////
 // Init GPIO Code from Dylan //
@@ -260,7 +263,7 @@ void draw_state(struct gamestate * state, unsigned int init_time) {
     for (int i = 0; i < state->num_packs; ++i)
     {
         // Print state->packs[i] with grid coords (x, y) at location (x * SCREENWIDTH/state->width, y * SCREENHEIGHT/state->height)
-        if (state->packs[i].exists)
+        if (state->packs[i].exists && !(state->packs[i].trampled))
             draw_grid(&(state->packs[i]), state->width, state->height);
     }
 
@@ -268,13 +271,13 @@ void draw_state(struct gamestate * state, unsigned int init_time) {
     for (int i = 0; i < state->num_vehicles; ++i)
     {
         // Draw start...
-        draw_grid(&(state->vehicles[i].start), state->width, state->height);
+        if (!(state->vehicles[i].start.trampled)) draw_grid(&(state->vehicles[i].start), state->width, state->height);
         // Draw finish...
-        draw_grid(&(state->vehicles[i].finish), state->width, state->height);
+        if (!(state->vehicles[i].finish.trampled))draw_grid(&(state->vehicles[i].finish), state->width, state->height);
     }
 
     // Draw the exit...
-    draw_grid(&(state->exit), state->width, state->height);
+    if (!(state->exit.trampled))draw_grid(&(state->exit), state->width, state->height);
 
     // Update and print score...
     state->score = state->time + (250000 * state->lives) + (250000 * state->dk.num_coins_grabbed);
@@ -301,6 +304,7 @@ void draw_state(struct gamestate * state, unsigned int init_time) {
     // End of drawing gamestate.
 }
 
+
 // Print black at every cell of the gamestate.
 void black_screen(struct gamestate *state)
 {
@@ -313,22 +317,73 @@ void black_screen(struct gamestate *state)
     }
 }
 
-// Print black at every cell of the gamestate.
-void set_screen(struct gamestate state)
+
+// Print platforms and ladders at required position in game state....
+// This method will only be called at the very beginning of level. After that, platforms and ladders will be re-printed
+// only in necessary cells after DK/enemies move.
+void set_screen(struct gamestate *state)
 {
 
-    for(int i = 0; i < (state.width * state.height); ++i){
-        if(state.map_tiles[i] == 0){
-            myDrawImage(black_image.pixel_data, black_image.width, black_image.height, grid_to_pixel_x((i % 25), state.width), grid_to_pixel_y((i / 25), state.height));
+    for(int i = 0; i < (state->width * state->height); ++i){
+        if(state->map_tiles[i] == 0){
+            myDrawImage(black_image.pixel_data, black_image.width, black_image.height, grid_to_pixel_x((i % 25), state->width), grid_to_pixel_y((i / 25), state->height));
         }
-        else if(state.map_tiles[i] == 1){        //Draw Platform
-            myDrawImage(black_image.pixel_data, black_image.width, black_image.height, grid_to_pixel_x((i % 25), state.width), grid_to_pixel_y((i / 25), state.height));
+        else if(state->map_tiles[i] == 1){        //Draw Platform
+            myDrawImage(health_image.pixel_data, health_image.width, health_image.height, grid_to_pixel_x((i % 25), state->width), grid_to_pixel_y((i / 25), state->height));
         }
-        else if(state.map_tiles[i] == 2){        //Draw Ladder
-            myDrawImage(black_image.pixel_data, black_image.width, black_image.height, (grid_to_pixel_x((i % 25), state.width)), grid_to_pixel_y((i / 25), state.height));
+        else if(state->map_tiles[i] == 2){        //Draw Ladder
+            myDrawImage(coin_image.pixel_data, coin_image.width, coin_image.height, (grid_to_pixel_x((i % 25), state->width)), grid_to_pixel_y((i / 25), state->height));
         }
     }
 }
+
+
+// Erases every object in the gamestate.
+void erase_state(struct gamestate *state) {
+    // Erase DK...
+    draw_image(state->background, grid_to_pixel_x(state->dk.loc.x, state->width), grid_to_pixel_y(state->dk.loc.y, state->height));
+
+    // Erase each enemy...
+    for (int i = 0; i < state->num_enemies; ++i)
+    {
+        draw_image(state->background, grid_to_pixel_x(state->enemies[i].loc.x, state->width), grid_to_pixel_y(state->enemies[i].loc.y, state->height));
+    }
+
+    // Erase each pack...
+    for (int i = 0; i < state->num_packs; ++i)
+    {
+        draw_image(state->background, grid_to_pixel_x(state->packs[i].loc.x, state->width), grid_to_pixel_y(state->packs[i].loc.y, state->height));
+    }
+
+    // Erase each vehicle...
+    for (int i = 0; i < state->num_vehicles; ++i)
+    {
+        draw_image(state->background, grid_to_pixel_x(state->vehicles[i].start.loc.x, state->width), grid_to_pixel_y(state->vehicles[i].start.loc.y, state->height));
+        draw_image(state->background, grid_to_pixel_x(state->vehicles[i].finish.loc.x, state->width), grid_to_pixel_y(state->vehicles[i].finish.loc.y, state->height));
+    }
+
+    // Erase exit...
+    draw_image(state->background, grid_to_pixel_x(state->exit.loc.x, state->width), grid_to_pixel_y(state->exit.loc.y, state->height));
+
+    // Erase time, score, lives...
+    drawRect(SCREENWIDTH - 200, 0, SCREENWIDTH + 50, 3*FONT_HEIGHT + 50, 0x0, 1);
+
+    // Erase all ladders and platforms...
+    for (int i = 0; i < state->width*state->height; ++i) {
+        if (state->map_tiles[i] > 0) draw_image(state->background, grid_to_pixel_x(i % state->width, state->width), grid_to_pixel_y(i / state->width, state->height));
+    }
+
+}
+
+
+// Draws background at specified coordinates. In particular, draws platform/ladder if specified in mapTiles,
+// else draw black.
+void draw_background(int x, int y, struct gamestate *state) {
+    if (state->map_tiles[(state->width)*y + x] == 0) draw_image(state->background, grid_to_pixel_x(x, state->width), grid_to_pixel_y(y, state->height));
+    else if (state->map_tiles[(state->width)*y + x] == 1) draw_image(state->platform, grid_to_pixel_x(x, state->width), grid_to_pixel_y(y, state->height));
+    else draw_image(state->ladder, grid_to_pixel_x(x, state->width), grid_to_pixel_y(y, state->height));
+}
+
 
 //////////////////////////////////////////
 // START MENU / LEVEL SELECTION METHODS //
@@ -490,9 +545,10 @@ int pause_menu(int *buttons, struct gamestate *state) {
     return exit_game;
 }
 
-////////////////////////
-// MOVEMENT FUNCTIONS //
-////////////////////////
+
+////////////////////////////////
+// MOVEMENT/GAMPLAY FUNCTIONS //
+////////////////////////////////
 
 // Moves DK based on buttons pressed in passed array.
 void DKmove(int *buttons, struct gamestate *state)
@@ -504,89 +560,118 @@ void DKmove(int *buttons, struct gamestate *state)
     int oldx = (*state).dk.loc.x;
     int oldy = (*state).dk.loc.y;
 
+    // Record hypothetical "moved to" location, we'll check that this cell is actually valid
+    // before moving...
+    int newx = oldx;
+    int newy = oldy;
+
     if (buttons[7] == 0)
     { // Right
-        if ((*state).dk.loc.x + (*state).dk.speed <= (*state).width)
+        if (oldx + (*state).dk.speed <= (*state).width - 1)
         {
             // Ensure that DK does not step outside of screen
             uart_puts("Right\n");
             pressed = 7;
-            (*state).dk.loc.x += (*state).dk.speed;
+            newx = (*state).dk.loc.x + (*state).dk.speed;
             (*state).dk.enemy_direction = 1;
         }
     }
 
     else if (buttons[6] == 0)
     { // Left
-        if ((*state).dk.loc.x - (*state).dk.speed >= 0)
+        if (oldx - (*state).dk.speed >= 0)
         {
             // Ensure that DK does not step outside of screen
             uart_puts("Left\n");
             pressed = 6;
-            (*state).dk.loc.x -= (*state).dk.speed;
+            newx = (*state).dk.loc.x - (*state).dk.speed;
             (*state).dk.enemy_direction = 0;
         }
     }
 
     else if (buttons[4] == 0)
     { // Up
-        if ((*state).dk.loc.y - (*state).dk.speed >= 0)
+        if (oldy - (*state).dk.speed >= 0)
         {
             // Ensure that DK does not step outside of screen
             uart_puts("Up\n");
             pressed = 4;
-            (*state).dk.loc.y -= (*state).dk.speed;
+            newy = (*state).dk.loc.y - (*state).dk.speed;
             (*state).dk.enemy_direction = 2;
         }
     }
 
     else if (buttons[5] == 0)
     { // Down
-        if ((*state).dk.loc.y + (*state).dk.speed <= (*state).height)
+        if (oldy + (*state).dk.speed <= (*state).height - 1)
         {
             // Ensure that DK does not step outside of screen
             uart_puts("Down\n");
             pressed = 5;
-            (*state).dk.loc.y += (*state).dk.speed;
+            newy = (*state).dk.loc.y + (*state).dk.speed;
             (*state).dk.enemy_direction = 2;
         }
     }
 
-    // If DK moved, he loses his immunity and we redraw the background at his old location.
-    // If DK hasn't moved we don't redraw the background - this is to prevent DK from fading
-    // in and out of black.
-    if (pressed > 0)
-    {
-        (*state).dk.dk_immunity = 0;
-        draw_image((*state).background, grid_to_pixel_x(oldx, (*state).width), grid_to_pixel_y(oldy, (*state).height));
+    // If the cell DK wants to move to (may be current cell) is valid, update drawing and position of DK.
+    if (is_valid_cell(newx, newy, state)) {
+
+        uart_puts("Valid\n");
+
+        // Move DK to new valid cell...
+        state->dk.loc.x = newx;
+        state->dk.loc.y = newy;
+
+        // If DK moved, he loses his immunity and we redraw the background at his old location.
+        // If DK hasn't moved we don't redraw the background - this is to prevent DK from fading
+        // in and out of black.
+        if (pressed > 0)
+        {
+            (*state).dk.dk_immunity = 0;
+
+            // Redraw background at old location... will depend on whether cell is occupied by a ladder, platform, or nothing.
+            draw_background(oldx, oldy, state);
+            // draw_image((*state).background, grid_to_pixel_x(oldx, (*state).width), grid_to_pixel_y(oldy, (*state).height));
+        }
+
+        // Regardless of whether DK moved, draw him at his new location...
+        draw_grid(&((*state).dk), (*state).width, (*state).height);
+        // draw_image((*state).dk.sprite, (*state).dk.loc.x * (SCREENWIDTH / (*state).width), (*state).dk.loc.y * (SCREENHEIGHT / (*state).height));
+
+        // Wait for pressed joypad button to be unpressed before function can be exited
+        // Time and score will continue to be updated while we're in this loop so that these values are not paused when Jpad is held down.
+
+        unsigned int initial_time = *clo;
+
+        while (pressed > 0)
+        {
+            read_SNES(buttons);
+            if (buttons[pressed] == 1)
+                pressed = 0;
+            initial_time = ((*clo - initial_time) / 1000) + 1; // initial_time is time elapsed in thousandths of a second.
+            // 1 is added to initial_time in case iterations of this loop are short enough that *clo - initial_time < 1000
+            (*state).time -= initial_time;
+
+            initial_time = *clo; // Setting of initial_time is put here as printing to screen is the most time-consuming part of this loop.
+
+            // Print updated time to screen...
+            draw_int((*state).time, SCREENWIDTH, 2 * FONT_HEIGHT, 0xF);
+            // drawString(SCREENWIDTH - 200, 2*FONT_HEIGHT, "TIME:", 0xF);
+        }
+
     }
 
-    // Regardless of whether DK moved, draw him at his new location...
-    draw_grid(&((*state).dk), (*state).width, (*state).height);
-    // draw_image((*state).dk.sprite, (*state).dk.loc.x * (SCREENWIDTH / (*state).width), (*state).dk.loc.y * (SCREENHEIGHT / (*state).height));
-
-    // Wait for pressed joypad button to be unpressed before function can be exited
-    // Time and score will continue to be updated while we're in this loop so that these values are not paused when Jpad is held down.
-
-    unsigned int initial_time = *clo;
-
-    while (pressed > 0)
-    {
-        read_SNES(buttons);
-        if (buttons[pressed] == 1)
-            pressed = 0;
-        initial_time = ((*clo - initial_time) / 1000) + 1; // initial_time is time elapsed in thousandths of a second.
-        // 1 is added to initial_time in case iterations of this loop are short enough that *clo - initial_time < 1000
-        (*state).time -= initial_time;
-
-        initial_time = *clo; // Setting of initial_time is put here as printing to screen is the most time-consuming part of this loop.
-
-        // Print updated time to screen...
-        draw_int((*state).time, SCREENWIDTH, 2 * FONT_HEIGHT, 0xF);
-        // drawString(SCREENWIDTH - 200, 2*FONT_HEIGHT, "TIME:", 0xF);
+    // Else, cell is invalid - do not move DK.
+    // I think that I've set this up so that DKs sprite will still update when he tries to move to a non-valid cell,
+    // which I think is what we want.
+    else {
+        // Draw DK at his old (and current) location....
+        draw_grid(&(state->dk), state->width, state->height);
     }
 }
 
+
+// NOT USED ANYMORE - MOVEMENT OF ENEMIES IS HANDLED WITHIN GAME LOOP.
 // Moves enemy using enemy_direction.
 // If enemy is at the edge of the screen, flip enemy_direction.
 void move_enemy(struct object *ob_ptr, struct gamestate *state)
@@ -644,6 +729,7 @@ void move_enemy(struct object *ob_ptr, struct gamestate *state)
     
 }
 
+
 /*
  * This method manages a boomerang object once it has been created.
  * It manages the direction, location and object interaction between
@@ -681,7 +767,7 @@ void updateBoomerang(struct gamestate *state)
     {
         if ((*state).boomerang.loc.x == (*state).enemies[i].loc.x && (*state).boomerang.loc.y == (*state).enemies[i].loc.y)
         {
-            (*state).boomerang.register_hit;
+            (*state).boomerang.register_hit = 1;
             (*state).enemies[i].exists = 0;
             if ((*state).boomerang.direction == 1)
             {
@@ -703,15 +789,15 @@ void updateBoomerang(struct gamestate *state)
 
     if ((*state).boomerang.sprite.img == bananarang.pixel_data)
     {
-        (*state).boomerang.sprite.img = bananarang2.pixel_data;
+        (*state).boomerang.sprite.img = (unsigned char*) bananarang2.pixel_data;
     }
     else if ((*state).boomerang.sprite.img == bananarang2.pixel_data)
     {
-        (*state).boomerang.sprite.img = bananarang3.pixel_data;
+        (*state).boomerang.sprite.img = (unsigned char*) bananarang3.pixel_data;
     }
     else if ((*state).boomerang.sprite.img == bananarang3.pixel_data)
     {
-        (*state).boomerang.sprite.img = bananarang.pixel_data;
+        (*state).boomerang.sprite.img = (unsigned char*) bananarang.pixel_data;
     }
 
     // Draw boomerang if current position is not dk's position.
@@ -719,12 +805,13 @@ void updateBoomerang(struct gamestate *state)
     {
         draw_image((*state).boomerang.sprite, grid_to_pixel_x((*state).boomerang.loc.x, (*state).width), grid_to_pixel_y((*state).boomerang.loc.y, (*state).height));
     }
-    // Draw boomerang if previous position is not dk's position (as to not erase dk)
+    // Draw background if previous position is not dk's position (as to not erase dk)
     if (oldx != (*state).dk.loc.x)
     {
-        draw_image((*state).background, grid_to_pixel_x(oldx, (*state).width), grid_to_pixel_y(oldy, (*state).height));
+        draw_background(oldx, oldy, state);
     }
 }
+
 
 // Checks for collisions with DK in the gamestate. Updates gamestate accordingly.
 void checkDKCollisions(struct gamestate *state) {
@@ -813,33 +900,23 @@ void checkDKCollisions(struct gamestate *state) {
 }
 
 
-// Erases every object in the gamestate.
-void erase_state(struct gamestate *state) {
-    // Erase DK...
-    draw_image(state->background, grid_to_pixel_x(state->dk.loc.x, state->width), grid_to_pixel_y(state->dk.loc.y, state->height));
-
-    // Erase each enemy...
-    for (int i = 0; i < state->num_enemies; ++i)
-    {
-        draw_image(state->background, grid_to_pixel_x(state->enemies[i].loc.x, state->width), grid_to_pixel_y(state->enemies[i].loc.y, state->height));
-    }
-
-    // Erase each pack...
-    for (int i = 0; i < state->num_packs; ++i)
-    {
-        draw_image(state->background, grid_to_pixel_x(state->packs[i].loc.x, state->width), grid_to_pixel_y(state->packs[i].loc.y, state->height));
-    }
-
-    // Erase each vehicle...
-    for (int i = 0; i < state->num_vehicles; ++i)
-    {
-        draw_image(state->background, grid_to_pixel_x(state->vehicles[i].start.loc.x, state->width), grid_to_pixel_y(state->vehicles[i].start.loc.y, state->height));
-        draw_image(state->background, grid_to_pixel_x(state->vehicles[i].finish.loc.x, state->width), grid_to_pixel_y(state->vehicles[i].finish.loc.y, state->height));
-    }
-
-    // Erase exit...
-    draw_image(state->background, grid_to_pixel_x(state->exit.loc.x, state->width), grid_to_pixel_y(state->exit.loc.y, state->height));
-
+// Check to see if the passed coordinates are a "valid cell" for DK to move to.
+// There are 3 kinds of valid cells:
+// A cell is valid if it is occupied by a ladder.
+// A cell is valid if it is directly above a cell occupied by a platform.
+// A cell is valid if it is occupied by a platform and is directly above a ladder.
+int is_valid_cell(int x, int y, struct gamestate *state) {
+    int is_valid;
+    // If cell is ladder, valid...
+    if (state->map_tiles[(state->width)*y + x] == 2) is_valid = 1;
+    // OK. IF CELL IS NOT A LADDER AND y = state->height, INVALID. OTHERWISE THE TESTS BELOW WILL ACCESS ELEMENTS
+    // OUTSIDE OF ARRAY AND UNEXPECTED CELLS WILL SHOW UP AS VALID.
+    else if (y == 24) is_valid = 0;
+    // If cell is above a platform, valid...
+    else if (state->map_tiles[(state->width)*(y + 1) + x] == 1) is_valid = 1;
+    else if (state->map_tiles[(state->width)*y + x] == 1 && state->map_tiles[25*(y + 1) + x] == 2) is_valid = 1;
+    else is_valid = 0;
+    return is_valid;
 }
 
 
@@ -856,6 +933,8 @@ int main()
         uart_puts(str);
     }
 
+    uart_puts("Running\n");
+
     /////////////////////////////
     // First, set up driver... //
     /////////////////////////////
@@ -868,6 +947,8 @@ int main()
     // Initialize SNES lines and frame buffer.
     init_snes_lines();
     fb_init();
+
+    uart_puts("Initialized\n");
 
     /////////////////////////////////
     // START MENU - BASICALLY DONE //
@@ -912,13 +993,23 @@ first_stage:
     state.winflag = 0;
     state.loseflag = 0;
 
-    // Background image for stage 1...
+    // Background images for first stage...
 
-    state.background.img = black_image.pixel_data;
+    state.background.img = (unsigned char*) black_image.pixel_data;
     state.background.width = black_image.width;
     state.background.height = black_image.height;
 
-    state.dk.sprite.img = dk_right0.pixel_data; // Initial image of DK will be standing, facing right.
+    state.platform.img = (unsigned char*) health_image.pixel_data;
+    state.platform.width = health_image.width;
+    state.platform.height = health_image.height;
+
+    state.ladder.img = (unsigned char*) coin_image.pixel_data;
+    state.ladder.width = coin_image.width;
+    state.ladder.height = coin_image.height;
+
+    // DK data...
+
+    state.dk.sprite.img = (unsigned char*) dk_right0.pixel_data; // Initial image of DK will be standing, facing right.
     state.dk.sprite.width = dk_right0.width;
     state.dk.sprite.height = dk_right0.height;
 
@@ -938,7 +1029,7 @@ first_stage:
 
     for (int i = 0; i < 2; ++i)
     {
-        state.enemies[i].sprite.img = enemy_image.pixel_data;
+        state.enemies[i].sprite.img = (unsigned char*) enemy_image.pixel_data;
         state.enemies[i].sprite.width = enemy_image.width;
         state.enemies[i].sprite.height = enemy_image.height;
 
@@ -963,7 +1054,7 @@ first_stage:
 
     for (int i = 0; i < 1; ++i)
     {
-        state.packs[i].sprite.img = heartpack.pixel_data;
+        state.packs[i].sprite.img = (unsigned char*) heartpack.pixel_data;
         state.packs[i].sprite.width = heartpack.width;
         state.packs[i].sprite.height = heartpack.height;
 
@@ -979,7 +1070,7 @@ first_stage:
 
     for (int i = 1; i < 3; ++i)
     {
-        state.packs[i].sprite.img = coinpack.pixel_data;
+        state.packs[i].sprite.img = (unsigned char*) coinpack.pixel_data;
         state.packs[i].sprite.width = coinpack.width;
         state.packs[i].sprite.height = coinpack.height;
 
@@ -995,7 +1086,7 @@ first_stage:
     state.packs[2].loc.y = 14;
 
     // Create boomerang pack
-    state.packs[3].sprite.img = bananarangpack.pixel_data;
+    state.packs[3].sprite.img = (unsigned char*) bananarangpack.pixel_data;
     state.packs[3].sprite.width = bananarangpack.width;
     state.packs[3].sprite.height = bananarangpack.height;
 
@@ -1009,7 +1100,7 @@ first_stage:
 
     // Boomerang setup;
 
-    state.boomerang.sprite.img = bananarang.pixel_data;
+    state.boomerang.sprite.img = (unsigned char*) bananarang.pixel_data;
     state.boomerang.sprite.width = bananarang.width;
     state.boomerang.sprite.height = bananarang.height;
 
@@ -1026,10 +1117,10 @@ first_stage:
 
     // First vehicle... maybe a vine? For now using health pack image.
     // This one will be unidirectional...
-    state.vehicles[0].start.sprite.img = health_image.pixel_data;
+    state.vehicles[0].start.sprite.img = (unsigned char*) health_image.pixel_data;
     state.vehicles[0].start.sprite.width = health_image.width;
     state.vehicles[0].start.sprite.height = health_image.height;
-    state.vehicles[0].finish.sprite.img = health_image.pixel_data;
+    state.vehicles[0].finish.sprite.img = (unsigned char*) health_image.pixel_data;
     state.vehicles[0].finish.sprite.width = health_image.width;
     state.vehicles[0].finish.sprite.height = health_image.height;
 
@@ -1043,10 +1134,10 @@ first_stage:
 
         // First vehicle... maybe a vine? For now using health pack image.
     // This one will be unidirectional...
-    state.vehicles[1].start.sprite.img = health_image.pixel_data;
+    state.vehicles[1].start.sprite.img = (unsigned char*) health_image.pixel_data;
     state.vehicles[1].start.sprite.width = health_image.width;
     state.vehicles[1].start.sprite.height = health_image.height;
-    state.vehicles[1].finish.sprite.img = health_image.pixel_data;
+    state.vehicles[1].finish.sprite.img = (unsigned char*) health_image.pixel_data;
     state.vehicles[1].finish.sprite.width = health_image.width;
     state.vehicles[1].finish.sprite.height = health_image.height;
 
@@ -1060,10 +1151,10 @@ first_stage:
     
     // First vehicle... maybe a vine? For now using health pack image.
     // This one will be unidirectional...
-    state.vehicles[2].start.sprite.img = health_image.pixel_data;
+    state.vehicles[2].start.sprite.img = (unsigned char*) health_image.pixel_data;
     state.vehicles[2].start.sprite.width = health_image.width;
     state.vehicles[2].start.sprite.height = health_image.height;
-    state.vehicles[2].finish.sprite.img = health_image.pixel_data;
+    state.vehicles[2].finish.sprite.img = (unsigned char*) health_image.pixel_data;
     state.vehicles[2].finish.sprite.width = health_image.width;
     state.vehicles[2].finish.sprite.height = health_image.height;
 
@@ -1077,10 +1168,10 @@ first_stage:
 
     // Second vehicle... maybe a boat/jeep? For now using health pack image.
     // This one will be bidirectional...
-    state.vehicles[3].start.sprite.img = health_image.pixel_data;
+    state.vehicles[3].start.sprite.img = (unsigned char*) health_image.pixel_data;
     state.vehicles[3].start.sprite.width = health_image.width;
     state.vehicles[3].start.sprite.height = health_image.height;
-    state.vehicles[3].finish.sprite.img = health_image.pixel_data;
+    state.vehicles[3].finish.sprite.img = (unsigned char*) health_image.pixel_data;
     state.vehicles[3].finish.sprite.width = health_image.width;
     state.vehicles[3].finish.sprite.height = health_image.height;
 
@@ -1097,15 +1188,14 @@ first_stage:
         state.vehicles[i].finish.trampled = 0;
     }
 
-    // Exit...
-
+    // Exit... will be located at coords (5, 0), middle of top of screen...
     // Set up exit... (temporarily using coin image)
-    state.exit.sprite.img = coin_image.pixel_data;
+    state.exit.sprite.img = (unsigned char*) coin_image.pixel_data;
     state.exit.sprite.width = coin_image.width;
     state.exit.sprite.height = coin_image.height;
 
-    // Exit for first stage will be located at coords (5, 0), middle of top of screen...
-    state.exit.loc.x = 5;
+    // Exit for first stage is top of ladder leading out of screen...
+    state.exit.loc.x = 17;
     state.exit.loc.y = 0;
     state.exit.exists = 1;
     state.exit.trampled = 0;
@@ -1125,6 +1215,9 @@ first_stage:
     int enemy_move_delay = 1000000;         // Suppose to be 1 second
     int dk_spriteTracker = 0;
 
+    // Set screen...
+    set_screen(&state);
+
     // this loop will run while we're in the first level - break if either win flag or lose flag is set.
     while (!state.winflag && !state.loseflag)
     {
@@ -1142,7 +1235,7 @@ first_stage:
             // If exit_game selected, print message and exit.
             if (exit_game == 1) {
                 drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT / 2, "Exiting...", 0xF);
-                wait(2000000);
+                wait(1000000);
                 drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT / 2, "          ", 0xF);
                 return 1;
             } else if (exit_game == 2) {
@@ -1164,15 +1257,15 @@ first_stage:
             {
                 if (state.dk.enemy_direction == 1)
                 { // if DK is facing right, switch to second right sprite
-                    state.dk.sprite.img = dk_right2.pixel_data;
+                    state.dk.sprite.img = (unsigned char*) dk_right2.pixel_data;
                 }
                 else if (state.dk.enemy_direction == 0)
                 { // if DK is facing left, switch to second left sprite
-                    state.dk.sprite.img = dk_left2.pixel_data;
+                    state.dk.sprite.img = (unsigned char*) dk_left2.pixel_data;
                 }
                 else if (state.dk.enemy_direction == 2)
                 { // if DK is climbing a ladder (up or down), switch to second ladder sprite
-                    state.dk.sprite.img = dk_ladder2.pixel_data;
+                    state.dk.sprite.img = (unsigned char*) dk_ladder2.pixel_data;
                 }
                 dk_spriteTracker = 1; // Tracker shifts, next interval will switch sprites.
             }
@@ -1180,15 +1273,15 @@ first_stage:
             {
                 if (state.dk.enemy_direction == 1)
                 { // if DK is facing right, switch to first right sprite
-                    state.dk.sprite.img = dk_right1.pixel_data;
+                    state.dk.sprite.img = (unsigned char*) dk_right1.pixel_data;
                 }
                 else if (state.dk.enemy_direction == 0)
                 { // if DK is facing left, switch to first left sprite
-                    state.dk.sprite.img = dk_left1.pixel_data;
+                    state.dk.sprite.img = (unsigned char*) dk_left1.pixel_data;
                 }
                 else if (state.dk.enemy_direction == 2)
                 { // if DK is climbing a ladder (up or down), switch to first ladder sprite
-                    state.dk.sprite.img = dk_ladder1.pixel_data;
+                    state.dk.sprite.img = (unsigned char*) dk_ladder1.pixel_data;
                 }
                 dk_spriteTracker = 0;
             }
@@ -1229,7 +1322,8 @@ first_stage:
                 }
 
                 // Draw enemy at new location and erase at old location.
-                draw_image(state.background, grid_to_pixel_x(oldx, state.width), grid_to_pixel_y(oldy, state.height));
+                draw_background(oldx, oldy, &state);
+                // draw_image(state.background, grid_to_pixel_x(oldx, state.width), grid_to_pixel_y(oldy, state.height));
                 draw_grid(&(state.enemies[i]), state.width, state.height);
                 
                 // If old location corresponds to a trampled pack, vehicle, or exit, set trampled to false for that object.
