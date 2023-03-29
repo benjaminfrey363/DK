@@ -30,7 +30,6 @@
 #include "coinpack.h"
 
 #include "structures.c"
-#include "init_gpio.c"
 
 #define MAXOBJECTS 30
 #define SCREENWIDTH 1888
@@ -60,6 +59,8 @@
 
 unsigned int *gpio = (unsigned *)GPIO_BASE;
 unsigned int *clo = (unsigned *)CLO_REG;
+
+void erase_state(struct gamestate *state);
 
 ///////////////////////////////
 // Init GPIO Code from Dylan //
@@ -476,40 +477,7 @@ int pause_menu(int *buttons, struct gamestate *state) {
 
         // No matter what was selected, we should erase the game state before either restarting or exiting.
 
-        // Erase DK...
-        draw_image(state->background, grid_to_pixel_x(state->dk.loc.x, state->width), grid_to_pixel_y(state->dk.loc.y, state->height));
-
-        // Erase each enemy...
-        for (int i = 0; i < state->num_enemies; ++i)
-        {
-            draw_image(state->background, grid_to_pixel_x(state->enemies[i].loc.x, state->width), grid_to_pixel_y(state->enemies[i].loc.y, state->height));
-        }
-
-        // Erase each pack...
-        for (int i = 0; i < state->num_packs; ++i)
-        {
-            draw_image(state->background, grid_to_pixel_x(state->packs[i].loc.x, state->width), grid_to_pixel_y(state->packs[i].loc.y, state->height));
-        }
-
-        // Erase each vehicle...
-        for (int i = 0; i < state->num_vehicles; ++i)
-        {
-            draw_image(state->background, grid_to_pixel_x(state->vehicles[i].start.loc.x, state->width), grid_to_pixel_y(state->vehicles[i].start.loc.y, state->height));
-            draw_image(state->background, grid_to_pixel_x(state->vehicles[i].finish.loc.x, state->width), grid_to_pixel_y(state->vehicles[i].finish.loc.y, state->height));
-        }
-
-        // Erase exit...
-        draw_image(state->background, grid_to_pixel_x(state->exit.loc.x, state->width), grid_to_pixel_y(state->exit.loc.y, state->height));
-
-        // Erase time, score, lives before terminating...
-        drawString(SCREENWIDTH - 200, FONT_HEIGHT, "       ", 0xF);     // Erase "SCORE:"
-        drawString(SCREENWIDTH - 200, 2 * FONT_HEIGHT, "      ", 0xF);  // Erase "TIME:"
-        drawString(SCREENWIDTH - 200, 3 * FONT_HEIGHT, "       ", 0xF); // ERASE "LIVES:"
-
-        // Erase numbers (big buffer used, during testing time counter has been holding some crazy values):
-        drawString(SCREENWIDTH - 100, FONT_HEIGHT, "                        ", 0xF);
-        drawString(SCREENWIDTH - 100, 2 * FONT_HEIGHT, "                        ", 0xF);
-        drawString(SCREENWIDTH - 100, 3 * FONT_HEIGHT, "                        ", 0xF);
+        erase_state(state);
 
         if (restart_pressed) exit_game = 2; // Restart first level.
         else {
