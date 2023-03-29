@@ -893,6 +893,123 @@ void updateBoomerang(struct gamestate *state)
     }
 }
 
+// Checks for collisions with DK in the gamestate. Updates gamestate accordingly.
+void checkDKCollisions(struct gamestate *state) {
+    // Check to see if DK has collided with an enemy. DK can only be hurt if his immunity is turned off.
+    if (!(state->dk.dk_immunity))
+    {
+        for (int i = 0; i < state->num_enemies; ++i)
+        {
+            if(state->enemies[i].exists){
+                if (state->dk.loc.x == state->enemies[i].loc.x && state->dk.loc.y == state->enemies[i].loc.y)
+                {
+                    --state->lives;
+                    printf("Lost a life\n");
+                    // Give DK immunity - he can't be hurt until he leaves this cell.
+                    state->dk.dk_immunity = 1;
+                    // Set lose flag if out of lives.
+                    if (state->lives == 0)
+                        state->loseflag = 1;
+                }
+            }
+        }
+    }
+
+    // Check to see if DK has collided with a pack...
+    for (int i = 0; i < state->num_packs; ++i)
+    {
+        if (state->dk.loc.x == state->packs[i].loc.x && state->dk.loc.y == state->packs[i].loc.y && state->packs[i].exists)
+        {
+            // See which kind of pack DK has collided with, update gamestate accordingly.
+            if (state->packs[i].health_pack)
+            {
+                // Give DK an extra life if he has less than 4.
+                if (state->lives < 4)
+                    ++state->lives;
+            }
+            else if (state->packs[i].point_pack)
+            {
+                ++state->dk.num_coins_grabbed;
+            }
+            else if (state->packs[i].boomerang_pack)
+            {
+                state->dk.has_boomerang = 1;
+            }
+
+            // Remove pack from stage.
+            state->packs[i].exists = 0;
+        }
+    }
+
+    // Check to see if DK has collided with a vehicle...
+    // To prevent DK from teleporting back and forth using bidirectional vehicles, set dk_immunity after DK teleports.
+    // dk_immunity won't be turned off until DK moves from the vehicle cell.
+    if (!state->dk.dk_immunity)
+    {
+        for (int i = 0; i < state->num_vehicles; ++i)
+        {
+
+            // Check for collision with start...
+            if (state->dk.loc.x == state->vehicles[i].start.loc.x && state->dk.loc.y == state->vehicles[i].start.loc.y)
+            {
+
+                // TO-DO: Insert vehicle animations (vine swinging, etc) if we have the time and ability
+
+                // Update location of DK to finish location of vehicle...
+                state->dk.loc.x = state->vehicles[i].finish.loc.x;
+                state->dk.loc.y = state->vehicles[i].finish.loc.y;
+
+                state->dk.dk_immunity = 1; // Set immunity.
+            }
+
+            // Check for collision with finish (only teleports DK if vehicle is bidirectional)
+            // Added else to this conditional so that DK cannot teleport start -> finish and then immediately finish -> start using a bidirectional vehicle.
+            else if (state->dk.loc.x == state->vehicles[i].finish.loc.x && state->dk.loc.y == state->vehicles[i].finish.loc.y && state->vehicles[i].bidirectional)
+            {
+
+                // TO-DO: Insert vehicle animations if we have time and ability.
+
+                // Update location of DK to start location of vehicle...
+                state->dk.loc.x = state->vehicles[i].start.loc.x;
+                state->dk.loc.y = state->vehicles[i].start.loc.y;
+
+                state->dk.dk_immunity = 1; // Set immunity.
+            }
+        }
+    }
+}
+
+
+// Erases every object in the gamestate.
+void erase_state(struct gamestate *state) {
+    // Erase DK...
+    draw_image(state->background, grid_to_pixel_x(state->dk.loc.x, state->width), grid_to_pixel_y(state->dk.loc.y, state->height));
+
+    // Erase each enemy...
+    for (int i = 0; i < state->num_enemies; ++i)
+    {
+        draw_image(state->background, grid_to_pixel_x(state->enemies[i].loc.x, state->width), grid_to_pixel_y(state->enemies[i].loc.y, state->height));
+    }
+
+    // Erase each pack...
+    for (int i = 0; i < state->num_packs; ++i)
+    {
+        draw_image(state->background, grid_to_pixel_x(state->packs[i].loc.x, state->width), grid_to_pixel_y(state->packs[i].loc.y, state->height));
+    }
+
+    // Erase each vehicle...
+    for (int i = 0; i < state->num_vehicles; ++i)
+    {
+        draw_image(state->background, grid_to_pixel_x(state->vehicles[i].start.loc.x, state->width), grid_to_pixel_y(state->vehicles[i].start.loc.y, state->height));
+        draw_image(state->background, grid_to_pixel_x(state->vehicles[i].finish.loc.x, state->width), grid_to_pixel_y(state->vehicles[i].finish.loc.y, state->height));
+    }
+
+    // Erase exit...
+    draw_image(state->background, grid_to_pixel_x(state->exit.loc.x, state->width), grid_to_pixel_y(state->exit.loc.y, state->height));
+
+}
+
+
 //////////
 // MAIN //
 //////////
@@ -1246,88 +1363,8 @@ first_stage:
 
         DKmove(buttons, &state);
 
-        // Check to see if DK has collided with an enemy. DK can only be hurt if his immunity is turned off.
-        if (!state.dk.dk_immunity)
-        {
-            for (int i = 0; i < state.num_enemies; ++i)
-            {
-                if(state.enemies[i].exists){
-                    if (state.dk.loc.x == state.enemies[i].loc.x && state.dk.loc.y == state.enemies[i].loc.y)
-                    {
-                        --state.lives;
-                        printf("Lost a life\n");
-                        // Give DK immunity - he can't be hurt until he leaves this cell.
-                        state.dk.dk_immunity = 1;
-                        // Set lose flag if out of lives.
-                        if (state.lives == 0)
-                            state.loseflag = 1;
-                    }
-                }
-            }
-        }
-
-        // Check to see if DK has collided with a pack...
-        for (int i = 0; i < state.num_packs; ++i)
-        {
-            if (state.dk.loc.x == state.packs[i].loc.x && state.dk.loc.y == state.packs[i].loc.y && state.packs[i].exists)
-            {
-                // See which kind of pack DK has collided with, update gamestate accordingly.
-                if (state.packs[i].health_pack)
-                {
-                    // Give DK an extra life if he has less than 4.
-                    if (state.lives < 4)
-                        ++state.lives;
-                }
-                else if (state.packs[i].point_pack)
-                {
-                    ++state.dk.num_coins_grabbed;
-                }
-                else if (state.packs[i].boomerang_pack)
-                {
-                    state.dk.has_boomerang = 1;
-                }
-
-                // Remove pack from stage.
-                state.packs[i].exists = 0;
-            }
-        }
-
-        // Check to see if DK has collided with a vehicle...
-        // To prevent DK from teleporting back and forth using bidirectional vehicles, set dk_immunity after DK teleports.
-        // dk_immunity won't be turned off until DK moves from the vehicle cell.
-        if (!state.dk.dk_immunity)
-        {
-            for (int i = 0; i < state.num_vehicles; ++i)
-            {
-
-                // Check for collision with start...
-                if (state.dk.loc.x == state.vehicles[i].start.loc.x && state.dk.loc.y == state.vehicles[i].start.loc.y)
-                {
-
-                    // TO-DO: Insert vehicle animations (vine swinging, etc) if we have the time and ability
-
-                    // Update location of DK to finish location of vehicle...
-                    state.dk.loc.x = state.vehicles[i].finish.loc.x;
-                    state.dk.loc.y = state.vehicles[i].finish.loc.y;
-
-                    state.dk.dk_immunity = 1; // Set immunity.
-                }
-
-                // Check for collision with finish (only teleports DK if vehicle is bidirectional)
-                // Added else to this conditional so that DK cannot teleport start -> finish and then immediately finish -> start using a bidirectional vehicle.
-                else if (state.dk.loc.x == state.vehicles[i].finish.loc.x && state.dk.loc.y == state.vehicles[i].finish.loc.y && state.vehicles[i].bidirectional)
-                {
-
-                    // TO-DO: Insert vehicle animations if we have time and ability.
-
-                    // Update location of DK to start location of vehicle...
-                    state.dk.loc.x = state.vehicles[i].start.loc.x;
-                    state.dk.loc.y = state.vehicles[i].start.loc.y;
-
-                    state.dk.dk_immunity = 1; // Set immunity.
-                }
-            }
-        }
+        // Check for collisions...
+        checkDKCollisions(&state);
 
         // MOVE_ENEMY FUNCTION
         // IMPORTANT - enemy always moves when this function is called.
@@ -1429,31 +1466,8 @@ first_stage:
 
     // First stage exited...
 
-    // Before doing anything else, clear the screen... (memcpy error when I try to call function, body copied here instead...)
-    // Erase DK...
-    draw_image(state.background, grid_to_pixel_x(state.dk.loc.x, state.width), grid_to_pixel_y(state.dk.loc.y, state.height));
-
-    // Erase each enemy...
-    for (int i = 0; i < state.num_enemies; ++i)
-    {
-        draw_image(state.background, grid_to_pixel_x(state.enemies[i].loc.x, state.width), grid_to_pixel_y(state.enemies[i].loc.y, state.height));
-    }
-
-    // Erase each pack...
-    for (int i = 0; i < state.num_packs; ++i)
-    {
-        draw_image(state.background, grid_to_pixel_x(state.packs[i].loc.x, state.width), grid_to_pixel_y(state.packs[i].loc.y, state.height));
-    }
-
-    // Erase each vehicle...
-    for (int i = 0; i < state.num_vehicles; ++i)
-    {
-        draw_image(state.background, grid_to_pixel_x(state.vehicles[i].start.loc.x, state.width), grid_to_pixel_y(state.vehicles[i].start.loc.y, state.height));
-        draw_image(state.background, grid_to_pixel_x(state.vehicles[i].finish.loc.x, state.width), grid_to_pixel_y(state.vehicles[i].finish.loc.y, state.height));
-    }
-
-    // Erase exit...
-    draw_image(state.background, grid_to_pixel_x(state.exit.loc.x, state.width), grid_to_pixel_y(state.exit.loc.y, state.height));
+    // Before doing anything else, clear the screen...
+    erase_state(&state);
 
     // If lost, print game over and return to menu.
     if (state.loseflag)
