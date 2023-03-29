@@ -1472,9 +1472,9 @@ first_stage:
     // If lost, print game over and return to menu.
     if (state.loseflag)
     {
-        drawString(SCREENWIDTH - 25, SCREENHEIGHT, "Game over!", 0xF);
+        drawString(SCREENWIDTH - 25, SCREENHEIGHT/2, "Game over!", 0xF);
         wait(2000000);
-        drawString(SCREENWIDTH - 25, SCREENHEIGHT, "           ", 0xF);
+        drawString(SCREENWIDTH - 25, SCREENHEIGHT/2, "           ", 0xF);
 
         // Copyable code to erase score/time/lives counters (functions which call drawString aren't working, so I can't make this into a function):
 
@@ -1505,9 +1505,9 @@ first_stage:
     drawString(SCREENWIDTH - 100, 2 * FONT_HEIGHT, "                        ", 0xF);
     drawString(SCREENWIDTH - 100, 3 * FONT_HEIGHT, "                        ", 0xF);
 
-    drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT, "First stage won!", 0xF);
+    drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT/2, "First stage won!", 0xF);
     wait(1000000);
-    drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT, "                 ", 0xF);
+    drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT/2, "                 ", 0xF);
     state.winflag = 0;
 
     // Move on to next stage...
