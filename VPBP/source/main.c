@@ -2,8 +2,8 @@
 #include "uart.h"
 #include "fb.h"
 
-//#include <stdio.h>
-//#include <unistd.h>
+// #include <stdio.h>
+// #include <unistd.h>
 
 // include images
 // #include "dk_image.h"
@@ -173,33 +173,632 @@ int read_SNES(int *array)
 int buttons[16];
 
 int map1[625] = {
-   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,
-   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,
-   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,
-   0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-   0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,
-   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-   0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,
-   0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,
-   0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,
-   0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,
-   0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,
-   0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,
-   0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,
-   0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,
-   0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,
-   0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,
-   0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,
-   0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-   0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-   0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    };
-
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+};
 
 ///////////////////////
 // DRAWING FUNCTIONS //
@@ -219,7 +818,8 @@ int grid_to_pixel_y(int y, int height)
 // Draws an object at its current grid coordinates.
 void draw_grid(struct object *o, int width, int height)
 {
-    if (!(*o).trampled) myDrawImage((*o).sprite.img, (*o).sprite.width, (*o).sprite.height, grid_to_pixel_x((*o).loc.x, width), grid_to_pixel_y((*o).loc.y, height));
+    if (!(*o).trampled)
+        myDrawImage((*o).sprite.img, (*o).sprite.width, (*o).sprite.height, grid_to_pixel_x((*o).loc.x, width), grid_to_pixel_y((*o).loc.y, height));
 }
 
 // Draws an int at specified pixel offsets (right end of number at offx)
@@ -244,7 +844,8 @@ void draw_image(struct image myimg, int offx, int offy)
 // Main drawing method - draws a game state.
 // Coordinates of all objects are in grid coords, so need to convert these to pixel
 // coords in order to draw.
-void draw_state(struct gamestate * state, unsigned int init_time) {
+void draw_state(struct gamestate *state, unsigned int init_time)
+{
     // Draw DK...
     // draw_grid(state->dk, state->width, state->height);
     // Drawing of DK moved to DKmove.
@@ -253,7 +854,8 @@ void draw_state(struct gamestate * state, unsigned int init_time) {
     for (int i = 0; i < state->num_enemies; ++i)
     {
         // Print state->enemies[i] with grid coords (x, y) at location (x * SCREENWIDTH/state->width, y * SCREENHEIGHT/state->height)
-        if (state->enemies[i].exists) draw_grid(&(state->enemies[i]), state->width, state->height);
+        if (state->enemies[i].exists)
+            draw_grid(&(state->enemies[i]), state->width, state->height);
     }
 
     // Draw each pack...
@@ -317,14 +919,18 @@ void black_screen(struct gamestate *state)
 void set_screen(struct gamestate state)
 {
 
-    for(int i = 0; i < (state.width * state.height); ++i){
-        if(state.map_tiles[i] == 0){
+    for (int i = 0; i < (state.width * state.height); ++i)
+    {
+        if (state.map_tiles[i] == 0)
+        {
             myDrawImage(black_image.pixel_data, black_image.width, black_image.height, grid_to_pixel_x((i % 25), state.width), grid_to_pixel_y((i / 25), state.height));
         }
-        else if(state.map_tiles[i] == 1){        //Draw Platform
+        else if (state.map_tiles[i] == 1)
+        { // Draw Platform
             myDrawImage(black_image.pixel_data, black_image.width, black_image.height, grid_to_pixel_x((i % 25), state.width), grid_to_pixel_y((i / 25), state.height));
         }
-        else if(state.map_tiles[i] == 2){        //Draw Ladder
+        else if (state.map_tiles[i] == 2)
+        { // Draw Ladder
             myDrawImage(black_image.pixel_data, black_image.width, black_image.height, (grid_to_pixel_x((i % 25), state.width)), grid_to_pixel_y((i / 25), state.height));
         }
     }
@@ -374,10 +980,10 @@ int startMenuSelectOption(int *buttons, struct startMenu *start)
     return 0;
 }
 
-
 // Draws start menu, runs start menu selection process.
 // Returns start_flag - equal to 1 if start was selected, -1 if quit was selected.
-int start_menu(struct startMenu *sm, int *buttons) {
+int start_menu(struct startMenu *sm, int *buttons)
+{
     sm->startGameSelected = 1;
     sm->quitGameSelected = 0;
     int start_flag = 0;
@@ -412,9 +1018,9 @@ int start_menu(struct startMenu *sm, int *buttons) {
     return start_flag;
 }
 
-
 // Returns 0 to return to gameplay, 1 to exit game, 2 to restart.
-int pause_menu(int *buttons, struct gamestate *state) {
+int pause_menu(int *buttons, struct gamestate *state)
+{
     int restart_pressed = 1;
     int pressed_a = 0;
     int exit_game = 0;
@@ -428,13 +1034,16 @@ int pause_menu(int *buttons, struct gamestate *state) {
     {
         // First, display pause menu...
 
-        if (restart_pressed) {
+        if (restart_pressed)
+        {
             drawString(SCREENWIDTH / 2, SCREENHEIGHT / 2, "-> RESTART GAME", 0xF);
             drawString(SCREENWIDTH / 2, SCREENHEIGHT / 2 + 50, "   QUIT GAME", 0xF);
-        } else {
-                    drawString(SCREENWIDTH / 2, SCREENHEIGHT / 2, "   RESTART GAME", 0xF);
-                    drawString(SCREENWIDTH / 2, SCREENHEIGHT / 2 + 50, "-> QUIT GAME", 0xF);
-                }
+        }
+        else
+        {
+            drawString(SCREENWIDTH / 2, SCREENHEIGHT / 2, "   RESTART GAME", 0xF);
+            drawString(SCREENWIDTH / 2, SCREENHEIGHT / 2 + 50, "-> QUIT GAME", 0xF);
+        }
 
         // Read controller...
         read_SNES(buttons);
@@ -460,10 +1069,10 @@ int pause_menu(int *buttons, struct gamestate *state) {
         }
 
         else if (buttons[9 - 1] == 0)
-            {
-                // A is pressed, execute current selection.
-                pressed_a = 1;
-            }
+        {
+            // A is pressed, execute current selection.
+            pressed_a = 1;
+        }
     }
 
     // Erase pause menu...
@@ -471,7 +1080,8 @@ int pause_menu(int *buttons, struct gamestate *state) {
     drawString(SCREENWIDTH / 2, SCREENHEIGHT / 2, "                ", 0xF);
     drawString(SCREENWIDTH / 2, SCREENHEIGHT / 2 + 50, "              ", 0xF);
 
-    if (pressed_a) {
+    if (pressed_a)
+    {
         // Execute current selection. Otherwise, start was pressed to exit game menu and
         // we continue playing the game.
 
@@ -479,8 +1089,10 @@ int pause_menu(int *buttons, struct gamestate *state) {
 
         erase_state(state);
 
-        if (restart_pressed) exit_game = 2; // Restart first level.
-        else {
+        if (restart_pressed)
+            exit_game = 2; // Restart first level.
+        else
+        {
             drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT / 2, "Exiting...", 0xF);
             wait(2000000);
             drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT / 2, "          ", 0xF);
@@ -497,13 +1109,34 @@ int pause_menu(int *buttons, struct gamestate *state) {
 // Moves DK based on buttons pressed in passed array.
 void DKmove(int *buttons, struct gamestate *state)
 {
-
     int pressed = 0;
+
+    int rightLegalMove = 0;
+    int leftLegalMove = 0;
+    int upLegalMove = 0;
+    int downLegalMove = 0;
 
     // Record old coordinates so that background can be drawn there.
     int oldx = (*state).dk.loc.x;
     int oldy = (*state).dk.loc.y;
 
+    if ((*state).map_tiles[((oldy + 1) * 25 + oldx)] == 1)
+    {
+        (*state).dk.onPlatform = 1;
+    }
+    else if ((*state).map_tiles[(oldy)*25 + oldx] == 2)
+    {
+        (*state).dk.onPlatform = 2;
+        upLegalMove = 1;
+    }
+    if ((*state).map_tiles[((oldy + 1) * 25 + (oldx + 1))] == 1)
+    {
+        rightLegalMove = 1;
+    }
+    else if ((*state).map_tiles[((oldy + 1) * 25 + (oldx - 1))] == 1)
+    {
+        leftLegalMove = 1;
+    }
     if (buttons[7] == 0)
     { // Right
         if ((*state).dk.loc.x + (*state).dk.speed <= (*state).width)
@@ -617,31 +1250,42 @@ void move_enemy(struct object *ob_ptr, struct gamestate *state)
     // Draw enemy at new location and erase at old location.
     draw_image((*state).background, grid_to_pixel_x(oldx, (*state).width), grid_to_pixel_y(oldy, (*state).height));
     draw_grid(ob_ptr, (*state).width, (*state).height);
-    
+
     // If old location corresponds to a trampled pack, vehicle, or exit, set trampled to false for that object.
-    if (oldx == (*state).exit.loc.x && oldy == (*state).exit.loc.y && (*state).exit.trampled) (*state).exit.trampled = 0;
-    
-    for (int i = 0; i < (*state).num_packs; ++i) {
-        if (oldx == (*state).packs[i].loc.x && oldy == (*state).packs[i].loc.y && (*state).packs[i].trampled) (*state).packs[i].trampled = 0;
+    if (oldx == (*state).exit.loc.x && oldy == (*state).exit.loc.y && (*state).exit.trampled)
+        (*state).exit.trampled = 0;
+
+    for (int i = 0; i < (*state).num_packs; ++i)
+    {
+        if (oldx == (*state).packs[i].loc.x && oldy == (*state).packs[i].loc.y && (*state).packs[i].trampled)
+            (*state).packs[i].trampled = 0;
     }
-    
-    for (int i = 0; i < (*state).num_vehicles; ++i) {
-        if (oldx == (*state).vehicles[i].start.loc.x && oldy == (*state).vehicles[i].start.loc.y && (*state).vehicles[i].start.trampled) (*state).vehicles[i].start.trampled = 0;
-        if (oldx == (*state).vehicles[i].finish.loc.x && oldy == (*state).vehicles[i].finish.loc.y && (*state).vehicles[i].finish.trampled) (*state).vehicles[i].finish.trampled = 0;
+
+    for (int i = 0; i < (*state).num_vehicles; ++i)
+    {
+        if (oldx == (*state).vehicles[i].start.loc.x && oldy == (*state).vehicles[i].start.loc.y && (*state).vehicles[i].start.trampled)
+            (*state).vehicles[i].start.trampled = 0;
+        if (oldx == (*state).vehicles[i].finish.loc.x && oldy == (*state).vehicles[i].finish.loc.y && (*state).vehicles[i].finish.trampled)
+            (*state).vehicles[i].finish.trampled = 0;
     }
-    
+
     // If new location corresponds to a pack, vehicle, or exit, set tramped to true for that object.
-    if ((*ob_ptr).loc.x == (*state).exit.loc.x && (*ob_ptr).loc.y == (*state).exit.loc.y) (*state).exit.trampled = 1;
-    
-    for (int i = 0; i < (*state).num_packs; ++i) {
-        if ((*ob_ptr).loc.x == (*state).packs[i].loc.x && (*ob_ptr).loc.y == (*state).packs[i].loc.y) (*state).packs[i].trampled = 1;
+    if ((*ob_ptr).loc.x == (*state).exit.loc.x && (*ob_ptr).loc.y == (*state).exit.loc.y)
+        (*state).exit.trampled = 1;
+
+    for (int i = 0; i < (*state).num_packs; ++i)
+    {
+        if ((*ob_ptr).loc.x == (*state).packs[i].loc.x && (*ob_ptr).loc.y == (*state).packs[i].loc.y)
+            (*state).packs[i].trampled = 1;
     }
-    
-    for (int i = 0; i < (*state).num_vehicles; ++i) {
-        if ((*ob_ptr).loc.x == (*state).vehicles[i].start.loc.x && (*ob_ptr).loc.y == (*state).vehicles[i].start.loc.y) (*state).vehicles[i].start.trampled = 1;
-        if ((*ob_ptr).loc.x == (*state).vehicles[i].finish.loc.x && (*ob_ptr).loc.y == (*state).vehicles[i].finish.loc.y) (*state).vehicles[i].finish.trampled = 1;
+
+    for (int i = 0; i < (*state).num_vehicles; ++i)
+    {
+        if ((*ob_ptr).loc.x == (*state).vehicles[i].start.loc.x && (*ob_ptr).loc.y == (*state).vehicles[i].start.loc.y)
+            (*state).vehicles[i].start.trampled = 1;
+        if ((*ob_ptr).loc.x == (*state).vehicles[i].finish.loc.x && (*ob_ptr).loc.y == (*state).vehicles[i].finish.loc.y)
+            (*state).vehicles[i].finish.trampled = 1;
     }
-    
 }
 
 /*
@@ -659,11 +1303,10 @@ void updateBoomerang(struct gamestate *state)
     if ((*state).boomerang.direction == 0 && (*state).boomerang.loc.x != 0)
     {
         (*state).boomerang.loc.x--;
-            // If boomerang hits either edge of the map, reverse direction
+        // If boomerang hits either edge of the map, reverse direction
         if ((*state).boomerang.loc.x <= 0)
         {
             (*state).boomerang.direction = 1;
-
         }
     }
     else if ((*state).boomerang.direction == 1 && (*state).boomerang.loc.x != (*state).width)
@@ -674,7 +1317,6 @@ void updateBoomerang(struct gamestate *state)
         {
             (*state).boomerang.direction = 0;
         }
-
     }
     // See if boomerang has hit any enemy, if so, kills enemy and reverses direction
     for (int i = 0; i < (*state).num_enemies; ++i)
@@ -727,13 +1369,15 @@ void updateBoomerang(struct gamestate *state)
 }
 
 // Checks for collisions with DK in the gamestate. Updates gamestate accordingly.
-void checkDKCollisions(struct gamestate *state) {
+void checkDKCollisions(struct gamestate *state)
+{
     // Check to see if DK has collided with an enemy. DK can only be hurt if his immunity is turned off.
     if (!(state->dk.dk_immunity))
     {
         for (int i = 0; i < state->num_enemies; ++i)
         {
-            if(state->enemies[i].exists){
+            if (state->enemies[i].exists)
+            {
                 if (state->dk.loc.x == state->enemies[i].loc.x && state->dk.loc.y == state->enemies[i].loc.y)
                 {
                     --state->lives;
@@ -812,9 +1456,9 @@ void checkDKCollisions(struct gamestate *state) {
     }
 }
 
-
 // Erases every object in the gamestate.
-void erase_state(struct gamestate *state) {
+void erase_state(struct gamestate *state)
+{
     // Erase DK...
     draw_image(state->background, grid_to_pixel_x(state->dk.loc.x, state->width), grid_to_pixel_y(state->dk.loc.y, state->height));
 
@@ -839,9 +1483,7 @@ void erase_state(struct gamestate *state) {
 
     // Erase exit...
     draw_image(state->background, grid_to_pixel_x(state->exit.loc.x, state->width), grid_to_pixel_y(state->exit.loc.y, state->height));
-
 }
-
 
 //////////
 // MAIN //
@@ -929,7 +1571,7 @@ first_stage:
     state.dk.dk_immunity = 0;
     state.dk.num_coins_grabbed = 0;
     state.dk.has_boomerang = 0;
-    
+
     state.dk.trampled = 0;
 
     // Enemies
@@ -945,7 +1587,7 @@ first_stage:
         state.enemies[i].speed = 1;
         state.enemies[i].enemy_direction = 0;
         state.enemies[i].exists = 1;
-        
+
         state.enemies[i].trampled = 0;
     }
 
@@ -1016,10 +1658,10 @@ first_stage:
     state.boomerang.tiles_per_second = 20;
     state.boomerang.exists = 0;    // Projectile not in game yet.
     state.boomerang.direction = 1; // 1 = right, 0 = left
-    
-    for (int i = 0; i < state.num_packs; ++i) state.packs[i].trampled = 0;
-    
-    
+
+    for (int i = 0; i < state.num_packs; ++i)
+        state.packs[i].trampled = 0;
+
     // Vehicles...
 
     state.num_vehicles = 4;
@@ -1041,7 +1683,7 @@ first_stage:
 
     state.vehicles[0].bidirectional = 0;
 
-        // First vehicle... maybe a vine? For now using health pack image.
+    // First vehicle... maybe a vine? For now using health pack image.
     // This one will be unidirectional...
     state.vehicles[1].start.sprite.img = health_image.pixel_data;
     state.vehicles[1].start.sprite.width = health_image.width;
@@ -1057,7 +1699,7 @@ first_stage:
     state.vehicles[1].finish.loc.y = 1;
 
     state.vehicles[1].bidirectional = 0;
-    
+
     // First vehicle... maybe a vine? For now using health pack image.
     // This one will be unidirectional...
     state.vehicles[2].start.sprite.img = health_image.pixel_data;
@@ -1091,8 +1733,9 @@ first_stage:
     state.vehicles[3].finish.loc.y = 12;
 
     state.vehicles[3].bidirectional = 1;
-    
-    for (int i = 0; i < state.num_vehicles; ++i) {
+
+    for (int i = 0; i < state.num_vehicles; ++i)
+    {
         state.vehicles[i].start.trampled = 0;
         state.vehicles[i].finish.trampled = 0;
     }
@@ -1110,7 +1753,8 @@ first_stage:
     state.exit.exists = 1;
     state.exit.trampled = 0;
 
-    for (int i = 0; i < 25*25; ++i) state.map_tiles[i] = map1[i];
+    for (int i = 0; i < 25 * 25; ++i)
+        state.map_tiles[i] = map1[i];
 
     //////////////////////
     // FIRST STAGE LOOP //
@@ -1137,15 +1781,19 @@ first_stage:
         read_SNES(buttons);
 
         // If start has been pressed, enter pause menu...
-        if (buttons[4 - 1] == 0) {
+        if (buttons[4 - 1] == 0)
+        {
             int exit_game = pause_menu(buttons, &state);
             // If exit_game selected, print message and exit.
-            if (exit_game == 1) {
+            if (exit_game == 1)
+            {
                 drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT / 2, "Exiting...", 0xF);
                 wait(2000000);
                 drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT / 2, "          ", 0xF);
                 return 1;
-            } else if (exit_game == 2) {
+            }
+            else if (exit_game == 2)
+            {
                 // Restart from first stage.
                 goto first_stage;
             }
@@ -1207,56 +1855,68 @@ first_stage:
             enemy_move_reference_time = *clo;
             for (int i = 0; i < state.num_enemies; i++)
             {
-                if(state.enemies[i].exists){
-                int oldx = state.enemies[i].loc.x;
-                int oldy = state.enemies[i].loc.y;
-
-                if (state.enemies[i].enemy_direction == 0)
+                if (state.enemies[i].exists)
                 {
-                    // Move left.
-                    if (state.enemies[i].loc.x - state.enemies[i].speed >= 0)
-                        state.enemies[i].loc.x -= state.enemies[i].speed;
-                    else
-                        state.enemies[i].enemy_direction = 1;
-                }
-                else
-                {
-                    // Move right.
-                    if (state.enemies[i].loc.x + state.enemies[i].speed <= state.width)
-                        state.enemies[i].loc.x += state.enemies[i].speed;
-                    else
-                        state.enemies[i].enemy_direction = 0;
-                }
+                    int oldx = state.enemies[i].loc.x;
+                    int oldy = state.enemies[i].loc.y;
 
-                // Draw enemy at new location and erase at old location.
-                draw_image(state.background, grid_to_pixel_x(oldx, state.width), grid_to_pixel_y(oldy, state.height));
-                draw_grid(&(state.enemies[i]), state.width, state.height);
-                
-                // If old location corresponds to a trampled pack, vehicle, or exit, set trampled to false for that object.
-                if (oldx == state.exit.loc.x && oldy == state.exit.loc.y && state.exit.trampled) state.exit.trampled = 0;
-    
-                for (int i = 0; i < state.num_packs; ++i) {
-                    if (oldx == state.packs[i].loc.x && oldy == state.packs[i].loc.y && state.packs[i].trampled) state.packs[i].trampled = 0;
+                    if (state.enemies[i].enemy_direction == 0)
+                    {
+                        // Move left.
+                        if (state.enemies[i].loc.x - state.enemies[i].speed >= 0)
+                            state.enemies[i].loc.x -= state.enemies[i].speed;
+                        else
+                            state.enemies[i].enemy_direction = 1;
+                    }
+                    else
+                    {
+                        // Move right.
+                        if (state.enemies[i].loc.x + state.enemies[i].speed <= state.width)
+                            state.enemies[i].loc.x += state.enemies[i].speed;
+                        else
+                            state.enemies[i].enemy_direction = 0;
+                    }
+
+                    // Draw enemy at new location and erase at old location.
+                    draw_image(state.background, grid_to_pixel_x(oldx, state.width), grid_to_pixel_y(oldy, state.height));
+                    draw_grid(&(state.enemies[i]), state.width, state.height);
+
+                    // If old location corresponds to a trampled pack, vehicle, or exit, set trampled to false for that object.
+                    if (oldx == state.exit.loc.x && oldy == state.exit.loc.y && state.exit.trampled)
+                        state.exit.trampled = 0;
+
+                    for (int i = 0; i < state.num_packs; ++i)
+                    {
+                        if (oldx == state.packs[i].loc.x && oldy == state.packs[i].loc.y && state.packs[i].trampled)
+                            state.packs[i].trampled = 0;
+                    }
+
+                    for (int i = 0; i < state.num_vehicles; ++i)
+                    {
+                        if (oldx == state.vehicles[i].start.loc.x && oldy == state.vehicles[i].start.loc.y && state.vehicles[i].start.trampled)
+                            state.vehicles[i].start.trampled = 0;
+                        if (oldx == state.vehicles[i].finish.loc.x && oldy == state.vehicles[i].finish.loc.y && state.vehicles[i].finish.trampled)
+                            state.vehicles[i].finish.trampled = 0;
+                    }
+
+                    // If new location corresponds to a pack, vehicle, or exit, set tramped to true for that object.
+                    if (state.enemies[i].loc.x == state.exit.loc.x && state.enemies[i].loc.y == state.exit.loc.y)
+                        state.exit.trampled = 1;
+
+                    for (int i = 0; i < state.num_packs; ++i)
+                    {
+                        if (state.enemies[i].loc.x == state.packs[i].loc.x && state.enemies[i].loc.y == state.packs[i].loc.y)
+                            state.packs[i].trampled = 1;
+                    }
+
+                    for (int i = 0; i < state.num_vehicles; ++i)
+                    {
+                        if (state.enemies[i].loc.x == state.vehicles[i].start.loc.x && state.enemies[i].loc.y == state.vehicles[i].start.loc.y)
+                            state.vehicles[i].start.trampled = 1;
+                        if (state.enemies[i].loc.x == state.vehicles[i].finish.loc.x && state.enemies[i].loc.y == state.vehicles[i].finish.loc.y)
+                            state.vehicles[i].finish.trampled = 1;
+                    }
                 }
-    
-                for (int i = 0; i < state.num_vehicles; ++i) {
-                    if (oldx == state.vehicles[i].start.loc.x && oldy == state.vehicles[i].start.loc.y && state.vehicles[i].start.trampled) state.vehicles[i].start.trampled = 0;
-                    if (oldx == state.vehicles[i].finish.loc.x && oldy == state.vehicles[i].finish.loc.y && state.vehicles[i].finish.trampled) state.vehicles[i].finish.trampled = 0;
-                }
-    
-                // If new location corresponds to a pack, vehicle, or exit, set tramped to true for that object.
-                if (state.enemies[i].loc.x == state.exit.loc.x && state.enemies[i].loc.y == state.exit.loc.y) state.exit.trampled = 1;
-    
-                for (int i = 0; i < state.num_packs; ++i) {
-                    if (state.enemies[i].loc.x == state.packs[i].loc.x && state.enemies[i].loc.y == state.packs[i].loc.y) state.packs[i].trampled = 1;
-                }
-    
-                for (int i = 0; i < state.num_vehicles; ++i) {
-                    if (state.enemies[i].loc.x == state.vehicles[i].start.loc.x && state.enemies[i].loc.y == state.vehicles[i].start.loc.y) state.vehicles[i].start.trampled = 1;
-                    if (state.enemies[i].loc.x == state.vehicles[i].finish.loc.x && state.enemies[i].loc.y == state.vehicles[i].finish.loc.y) state.vehicles[i].finish.trampled = 1;
-                }
-                }
-                
             }
         }
 
@@ -1266,7 +1926,7 @@ first_stage:
             // draw_image() underneath score, boomerang icon
             if (state.dk.has_boomerang)
             {
-                
+
                 if (state.dk.enemy_direction != 2)
                 {
                     state.boomerang.direction = state.dk.enemy_direction;
@@ -1305,9 +1965,9 @@ first_stage:
     // If lost, print game over and return to menu.
     if (state.loseflag)
     {
-        drawString(SCREENWIDTH - 25, SCREENHEIGHT/2, "Game over!", 0xF);
+        drawString(SCREENWIDTH - 25, SCREENHEIGHT / 2, "Game over!", 0xF);
         wait(2000000);
-        drawString(SCREENWIDTH - 25, SCREENHEIGHT/2, "           ", 0xF);
+        drawString(SCREENWIDTH - 25, SCREENHEIGHT / 2, "           ", 0xF);
 
         // Copyable code to erase score/time/lives counters (functions which call drawString aren't working, so I can't make this into a function):
 
@@ -1338,9 +1998,9 @@ first_stage:
     drawString(SCREENWIDTH - 100, 2 * FONT_HEIGHT, "                        ", 0xF);
     drawString(SCREENWIDTH - 100, 3 * FONT_HEIGHT, "                        ", 0xF);
 
-    drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT/2, "First stage won!", 0xF);
+    drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT / 2, "First stage won!", 0xF);
     wait(1000000);
-    drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT/2, "                 ", 0xF);
+    drawString(SCREENWIDTH / 2 - 25, SCREENHEIGHT / 2, "                 ", 0xF);
     state.winflag = 0;
 
     // Move on to next stage...
