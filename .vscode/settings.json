@@ -1,5 +1,11 @@
 {
     "files.associations": {
-        "emptypack.h": "c"
+        "emptypack.h": "c",
+        "bird_left1.h": "c",
+        "dk_right2.h": "c",
+        "bird_right1.h": "c",
+        "bananarangpack.h": "c",
+        "mario_left1.h": "c",
+        "mario_left2.h": "c"
     }
 }

@@ -16,6 +16,18 @@
 #include "dk_right1.h"
 #include "dk_right2.h"
 
+#include "bird_left1.h"
+#include "bird_left2.h"
+#include "bird_left3.h"
+#include "bird_right1.h"
+#include "bird_right2.h"
+#include "bird_right3.h"
+
+#include "mario_left1.h"
+#include "mario_left2.h"
+#include "mario_right1.h"
+#include "mario_right2.h"
+
 #include "bananarang.h"
 #include "bananarang2.h"
 #include "bananarang3.h"
