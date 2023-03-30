@@ -57,6 +57,8 @@ struct object
 
     // Boolean used to indicate that an enemy has collided with a pack, a vehicle, or an exit.
     int trampled;
+
+    int sprite_tracker;
 };
 
 // Vehicle structure - effectively teleports DK between cells.

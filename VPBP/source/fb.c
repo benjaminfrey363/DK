@@ -68,6 +68,11 @@ void drawPixel(int x, int y, unsigned char attr)
     *((unsigned int*)(fb + offs)) = vgapal[attr & 0x0f];
 }
 
+void myDrawPixel(int x, int y, int argb_color) {
+    int offs = (y * pitch) + (x * 4);
+    *((unsigned int*)(fb + offs)) = argb_color;
+}
+
 void drawRect(int x1, int y1, int x2, int y2, unsigned char attr, int fill)
 {
     int y=y1;
@@ -179,6 +184,6 @@ void myDrawImage(unsigned char * img, int width, int height, int offx, int offy)
         int rgba_color = img_buff[width*j + i];
         int argb_color = __builtin_bswap32(rgba_color); // match endianness by reversing lower 32 bits
         argb_color = (argb_color << 24) | (argb_color >> 8); // rgba argb
-        drawPixel(x,y,argb_color);
+        myDrawPixel(x,y,argb_color);
     }
 }
