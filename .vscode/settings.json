@@ -1,0 +1,6 @@
+{
+  "files.associations": {
+    "health.h": "c",
+    "coin.h": "c"
+  }
+}

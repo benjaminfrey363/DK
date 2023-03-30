@@ -1,10 +1,11 @@
 /* GIMP RGBA C-Source image dump (bananarang2.c) */
 
-static const struct {
-  unsigned int 	 width;
-  unsigned int 	 height;
-  unsigned int 	 bytes_per_pixel; /* 2:RGB16, 3:RGB, 4:RGBA */ 
-  unsigned char	 pixel_data[32 * 32 * 4 + 1];
+static const struct
+{
+  unsigned int width;
+  unsigned int height;
+  unsigned int bytes_per_pixel; /* 2:RGB16, 3:RGB, 4:RGBA */
+  unsigned char pixel_data[32 * 32 * 4 + 1];
 } bananarang2 = {
   32, 32, 4,
   "\000\000\000\377\000\000\000\377\000\000\000\377\000\000\000\377\000\000\000\377\000\000\000\377\000\000\000\377\000"
@@ -153,4 +154,3 @@ static const struct {
   "\377\000\000\000\377\000\000\000\377\000\000\000\377\000\000\000\377\000\000\000\377\000\000\000\377\000\000\000\377"
   "\000\000\000\377\000\000\000\377",
 };
-

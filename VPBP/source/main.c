@@ -38,6 +38,9 @@
 #include "ladder.h"
 #include "platform.h"
 
+#include "ladder.h"
+#include "platform.h"
+
 #include "structures.c"
 
 #define MAXOBJECTS 30
@@ -685,7 +688,6 @@ void DKmove(int *buttons, struct gamestate *state)
         draw_grid(&(state->dk), state->width, state->height);
     }
 }
-
 
 
 // Updates DKs sprite to be consistent with the direction he's facing.
