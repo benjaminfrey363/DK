@@ -570,7 +570,7 @@ void DKmove(int *buttons, struct gamestate *state)
         if (oldx + (*state).dk.speed <= (*state).width - 1)
         {
             // Ensure that DK does not step outside of screen
-            uart_puts("Right\n");
+            // uart_puts("Right\n");
             pressed = 7;
             newx = (*state).dk.loc.x + (*state).dk.speed;
             (*state).dk.enemy_direction = 1;
@@ -582,7 +582,7 @@ void DKmove(int *buttons, struct gamestate *state)
         if (oldx - (*state).dk.speed >= 0)
         {
             // Ensure that DK does not step outside of screen
-            uart_puts("Left\n");
+            // uart_puts("Left\n");
             pressed = 6;
             newx = (*state).dk.loc.x - (*state).dk.speed;
             (*state).dk.enemy_direction = 0;
@@ -594,7 +594,7 @@ void DKmove(int *buttons, struct gamestate *state)
         if (oldy - (*state).dk.speed >= 0)
         {
             // Ensure that DK does not step outside of screen
-            uart_puts("Up\n");
+            // uart_puts("Up\n");
             pressed = 4;
             newy = (*state).dk.loc.y - (*state).dk.speed;
             (*state).dk.enemy_direction = 2;
@@ -606,7 +606,7 @@ void DKmove(int *buttons, struct gamestate *state)
         if (oldy + (*state).dk.speed <= (*state).height - 1)
         {
             // Ensure that DK does not step outside of screen
-            uart_puts("Down\n");
+            // uart_puts("Down\n");
             pressed = 5;
             newy = (*state).dk.loc.y + (*state).dk.speed;
             (*state).dk.enemy_direction = 2;
@@ -616,7 +616,7 @@ void DKmove(int *buttons, struct gamestate *state)
     // If the cell DK wants to move to (may be current cell) is valid, update drawing and position of DK.
     if (is_valid_cell(newx, newy, state)) {
 
-        uart_puts("Valid\n");
+        // uart_puts("Valid\n");
 
         // Move DK to new valid cell...
         state->dk.loc.x = newx;
@@ -638,27 +638,6 @@ void DKmove(int *buttons, struct gamestate *state)
         draw_grid(&((*state).dk), (*state).width, (*state).height);
         // draw_image((*state).dk.sprite, (*state).dk.loc.x * (SCREENWIDTH / (*state).width), (*state).dk.loc.y * (SCREENHEIGHT / (*state).height));
 
-        // Wait for pressed joypad button to be unpressed before function can be exited
-        // Time and score will continue to be updated while we're in this loop so that these values are not paused when Jpad is held down.
-
-        unsigned int initial_time = *clo;
-
-        while (pressed > 0)
-        {
-            read_SNES(buttons);
-            if (buttons[pressed] == 1)
-                pressed = 0;
-            initial_time = ((*clo - initial_time) / 1000) + 1; // initial_time is time elapsed in thousandths of a second.
-            // 1 is added to initial_time in case iterations of this loop are short enough that *clo - initial_time < 1000
-            (*state).time -= initial_time;
-
-            initial_time = *clo; // Setting of initial_time is put here as printing to screen is the most time-consuming part of this loop.
-
-            // Print updated time to screen...
-            draw_int((*state).time, SCREENWIDTH, 2 * FONT_HEIGHT, 0xF);
-            // drawString(SCREENWIDTH - 200, 2*FONT_HEIGHT, "TIME:", 0xF);
-        }
-
     }
 
     // Else, cell is invalid - do not move DK.
@@ -671,62 +650,21 @@ void DKmove(int *buttons, struct gamestate *state)
 }
 
 
-// NOT USED ANYMORE - MOVEMENT OF ENEMIES IS HANDLED WITHIN GAME LOOP.
-// Moves enemy using enemy_direction.
-// If enemy is at the edge of the screen, flip enemy_direction.
-void move_enemy(struct object *ob_ptr, struct gamestate *state)
-{
-
-    // IMPORTANT - enemy always moves when this function is called.
-
-    int oldx = (*ob_ptr).loc.x;
-    int oldy = (*ob_ptr).loc.y;
-
-    if ((*ob_ptr).enemy_direction == 0)
-    {
-        // Move left.
-        if ((*ob_ptr).loc.x - (*ob_ptr).speed >= 0)
-            (*ob_ptr).loc.x -= (*ob_ptr).speed;
-        else
-            (*ob_ptr).enemy_direction = 1;
+// Updates DKs sprite to be consistent with the direction he's facing.
+// Flag indicates whether to use the first or second sprite.
+void updateDKdirection(struct gamestate *state, int flag) {
+    if (state->dk.enemy_direction == 1) {
+        // Facing right...
+        if (flag) state->dk.sprite.img = (unsigned char*) dk_right1.pixel_data;
+        else state->dk.sprite.img = (unsigned char*) dk_right2.pixel_data;
+    } else if (state->dk.enemy_direction == 0) {
+        // Facing left...
+        if (flag) state->dk.sprite.img = (unsigned char*) dk_left1.pixel_data;
+        else state->dk.sprite.img = (unsigned char*) dk_left2.pixel_data;
+    } else if (state->dk.enemy_direction == 2) {
+        if (flag) state->dk.sprite.img = (unsigned char*) dk_ladder1.pixel_data;
+        else state->dk.sprite.img = (unsigned char*) dk_ladder2.pixel_data;
     }
-    else
-    {
-        // Move right.
-        if ((*ob_ptr).loc.x + (*ob_ptr).speed <= (*state).width)
-            (*ob_ptr).loc.x += (*ob_ptr).speed;
-        else
-            (*ob_ptr).enemy_direction = 0;
-    }
-
-    // Draw enemy at new location and erase at old location.
-    draw_image((*state).background, grid_to_pixel_x(oldx, (*state).width), grid_to_pixel_y(oldy, (*state).height));
-    draw_grid(ob_ptr, (*state).width, (*state).height);
-    
-    // If old location corresponds to a trampled pack, vehicle, or exit, set trampled to false for that object.
-    if (oldx == (*state).exit.loc.x && oldy == (*state).exit.loc.y && (*state).exit.trampled) (*state).exit.trampled = 0;
-    
-    for (int i = 0; i < (*state).num_packs; ++i) {
-        if (oldx == (*state).packs[i].loc.x && oldy == (*state).packs[i].loc.y && (*state).packs[i].trampled) (*state).packs[i].trampled = 0;
-    }
-    
-    for (int i = 0; i < (*state).num_vehicles; ++i) {
-        if (oldx == (*state).vehicles[i].start.loc.x && oldy == (*state).vehicles[i].start.loc.y && (*state).vehicles[i].start.trampled) (*state).vehicles[i].start.trampled = 0;
-        if (oldx == (*state).vehicles[i].finish.loc.x && oldy == (*state).vehicles[i].finish.loc.y && (*state).vehicles[i].finish.trampled) (*state).vehicles[i].finish.trampled = 0;
-    }
-    
-    // If new location corresponds to a pack, vehicle, or exit, set tramped to true for that object.
-    if ((*ob_ptr).loc.x == (*state).exit.loc.x && (*ob_ptr).loc.y == (*state).exit.loc.y) (*state).exit.trampled = 1;
-    
-    for (int i = 0; i < (*state).num_packs; ++i) {
-        if ((*ob_ptr).loc.x == (*state).packs[i].loc.x && (*ob_ptr).loc.y == (*state).packs[i].loc.y) (*state).packs[i].trampled = 1;
-    }
-    
-    for (int i = 0; i < (*state).num_vehicles; ++i) {
-        if ((*ob_ptr).loc.x == (*state).vehicles[i].start.loc.x && (*ob_ptr).loc.y == (*state).vehicles[i].start.loc.y) (*state).vehicles[i].start.trampled = 1;
-        if ((*ob_ptr).loc.x == (*state).vehicles[i].finish.loc.x && (*ob_ptr).loc.y == (*state).vehicles[i].finish.loc.y) (*state).vehicles[i].finish.trampled = 1;
-    }
-    
 }
 
 
@@ -911,12 +849,75 @@ int is_valid_cell(int x, int y, struct gamestate *state) {
     if (state->map_tiles[(state->width)*y + x] == 2) is_valid = 1;
     // OK. IF CELL IS NOT A LADDER AND y = state->height, INVALID. OTHERWISE THE TESTS BELOW WILL ACCESS ELEMENTS
     // OUTSIDE OF ARRAY AND UNEXPECTED CELLS WILL SHOW UP AS VALID.
-    else if (y == 24) is_valid = 0;
+    else if (y == (state->height - 1)) is_valid = 0;
     // If cell is above a platform, valid...
     else if (state->map_tiles[(state->width)*(y + 1) + x] == 1) is_valid = 1;
     else if (state->map_tiles[(state->width)*y + x] == 1 && state->map_tiles[25*(y + 1) + x] == 2) is_valid = 1;
     else is_valid = 0;
     return is_valid;
+}
+
+
+// Spawns a pack randomly in the gamestate.
+// Random location is simulated by the clock register.
+// If flag is 1, spawn a health pack. If 0, spawn a point pack.
+void spawn_pack(struct gamestate *state, int flag) {
+
+    if (state->num_packs < MAXOBJECTS) {
+
+        // Only spawn a pack if number of packs on screen less than MAXOBJECTS.
+
+        // Need to determine a valid location for the pack.
+        int x = 0;
+        int y = state->height - 1;  // Initialized to an invalid cell...
+        int pack_there = 0;         // Flag indicating that there is a pack at the indicated location.
+
+        while (!is_valid_cell(x, y, state) || pack_there) {
+            // Select a random cell on the game map until a valid cell is found...
+            x = *clo % state->width;
+            y = *clo % state->height;
+
+            // Check if there is a pack at (x, y)... (for now only checking for pack collisions,
+            // can still spawn at vehicle or exit locations)
+            pack_there = 0;
+            for (int i = 0; i < state->num_packs; ++i) {
+                if (state->packs[i].loc.x == x && state->packs[i].loc.y == y) {
+                    pack_there = 1;
+                    break;
+                }
+            }
+        }
+
+        ++state->num_packs;
+        
+        state->packs[state->num_packs - 1].loc.x = x;
+        state->packs[state->num_packs - 1].loc.y = y;
+
+        state->packs[state->num_packs - 1].exists = 1;
+        state->packs[state->num_packs - 1].trampled = 0;
+
+        if (flag) {
+            // Spawn a health pack at coordinates (x, y)...
+            state->packs[state->num_packs - 1].sprite.img = health_image.pixel_data;
+            state->packs[state->num_packs - 1].sprite.width = health_image.width;
+            state->packs[state->num_packs - 1].sprite.height = health_image.height;
+            state->packs[state->num_packs - 1].health_pack = 1;
+            state->packs[state->num_packs - 1].point_pack = 0;
+            state->packs[state->num_packs - 1].boomerang_pack = 0;
+        } else {
+            // Spawn a point pack at coordinates (x, y)...
+            state->packs[state->num_packs - 1].sprite.img = coin_image.pixel_data;
+            state->packs[state->num_packs - 1].sprite.width = coin_image.width;
+            state->packs[state->num_packs - 1].sprite.height = coin_image.height;
+            state->packs[state->num_packs - 1].health_pack = 0;
+            state->packs[state->num_packs - 1].point_pack = 1;
+            state->packs[state->num_packs - 1].boomerang_pack = 0;
+        }
+
+        uart_puts("Pack spawned...\n");
+
+    }
+
 }
 
 
@@ -1210,10 +1211,13 @@ first_stage:
     unsigned int enemy_move_reference_time = *clo;
     unsigned int dk_sprite_change_reference = *clo;
     unsigned int boomerang_reference = *clo;
+    unsigned int pack_spawn_timer = *clo;
 
     int dk_sprite_change_interval = 500000; // Suppose to be 0.5 second
     int enemy_move_delay = 1000000;         // Suppose to be 1 second
-    int dk_spriteTracker = 0;
+    int pack_spawn_delay = 10000000;        // Spawn a pack every 10 seconds.
+
+    int dk_spriteTracker = 1;
 
     // Set screen...
     set_screen(&state);
@@ -1242,51 +1246,24 @@ first_stage:
                 // Restart from first stage.
                 goto first_stage;
             }
+
+            // Otherwise, start was pressed. Redraw game state in case anything was erased by pause menu.
+            set_screen(&state);
+
         }
 
-        // Move DK accordingly.
-
-        /*Based on clock value, this if-construct will be entered every 0.5 seconds. It will change the sprite model
-         * for the direction that DK is facing.
-         */
-        if (dk_sprite_change_reference + dk_sprite_change_interval <= time0)
-        {
+        // This block of code is entered every 0.5 seconds.
+        // Flips spriteTracker flag.
+        if (dk_sprite_change_reference + dk_sprite_change_interval <= *clo) {
+            dk_spriteTracker = 1 - dk_spriteTracker;
+            // Reset reference...
             dk_sprite_change_reference = *clo;
-
-            if (dk_spriteTracker == 0)
-            {
-                if (state.dk.enemy_direction == 1)
-                { // if DK is facing right, switch to second right sprite
-                    state.dk.sprite.img = (unsigned char*) dk_right2.pixel_data;
-                }
-                else if (state.dk.enemy_direction == 0)
-                { // if DK is facing left, switch to second left sprite
-                    state.dk.sprite.img = (unsigned char*) dk_left2.pixel_data;
-                }
-                else if (state.dk.enemy_direction == 2)
-                { // if DK is climbing a ladder (up or down), switch to second ladder sprite
-                    state.dk.sprite.img = (unsigned char*) dk_ladder2.pixel_data;
-                }
-                dk_spriteTracker = 1; // Tracker shifts, next interval will switch sprites.
-            }
-            else if (dk_spriteTracker == 1)
-            {
-                if (state.dk.enemy_direction == 1)
-                { // if DK is facing right, switch to first right sprite
-                    state.dk.sprite.img = (unsigned char*) dk_right1.pixel_data;
-                }
-                else if (state.dk.enemy_direction == 0)
-                { // if DK is facing left, switch to first left sprite
-                    state.dk.sprite.img = (unsigned char*) dk_left1.pixel_data;
-                }
-                else if (state.dk.enemy_direction == 2)
-                { // if DK is climbing a ladder (up or down), switch to first ladder sprite
-                    state.dk.sprite.img = (unsigned char*) dk_ladder1.pixel_data;
-                }
-                dk_spriteTracker = 0;
-            }
         }
 
+        // Update direction being faced by DK...
+        updateDKdirection(&state, dk_spriteTracker);
+
+        // Move DK based on SNES input.
         DKmove(buttons, &state);
 
         // Check for collisions...
@@ -1387,8 +1364,21 @@ first_stage:
             state.exit.exists = 0;
         }
 
+        // Check to see if 30 seconds have elapsed since the last pack was spawned. If so, spawn a pack...
+        if (pack_spawn_timer + pack_spawn_delay <= *clo) {
+            // flag = *clo % 2 to simulate random spawn of either health or point pack.
+            spawn_pack(&state, *clo % 2);
+            // Reset spawn pack timer.
+            pack_spawn_timer = *clo;
+        }
+
+
         // draw game state.
         draw_state(&state, time0);
+
+        // Lastly, wait for a brief period before executing loop body again. Quick fix to slow down
+        // DK when holding down Jpad.
+        wait(100000);
     }
 
     // First stage exited...
