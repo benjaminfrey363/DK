@@ -29,6 +29,9 @@
 #include "heartpack.h"
 #include "coinpack.h"
 
+#include "ladder.h"
+#include "platform.h"
+
 #include "structures.c"
 
 #define MAXOBJECTS 30
@@ -326,13 +329,13 @@ void set_screen(struct gamestate *state)
 
     for(int i = 0; i < (state->width * state->height); ++i){
         if(state->map_tiles[i] == 0){
-            myDrawImage(black_image.pixel_data, black_image.width, black_image.height, grid_to_pixel_x((i % 25), state->width), grid_to_pixel_y((i / 25), state->height));
+            draw_image(state->background, grid_to_pixel_x((i % 25), state->width), grid_to_pixel_y((i / 25), state->height));
         }
         else if(state->map_tiles[i] == 1){        //Draw Platform
-            myDrawImage(health_image.pixel_data, health_image.width, health_image.height, grid_to_pixel_x((i % 25), state->width), grid_to_pixel_y((i / 25), state->height));
+            draw_image(state->platform, grid_to_pixel_x((i % 25), state->width), grid_to_pixel_y((i / 25), state->height));
         }
         else if(state->map_tiles[i] == 2){        //Draw Ladder
-            myDrawImage(coin_image.pixel_data, coin_image.width, coin_image.height, (grid_to_pixel_x((i % 25), state->width)), grid_to_pixel_y((i / 25), state->height));
+            draw_image(state->ladder, grid_to_pixel_x((i % 25), state->width), grid_to_pixel_y((i / 25), state->height));
         }
     }
 }
@@ -1000,13 +1003,13 @@ first_stage:
     state.background.width = black_image.width;
     state.background.height = black_image.height;
 
-    state.platform.img = (unsigned char*) health_image.pixel_data;
-    state.platform.width = health_image.width;
-    state.platform.height = health_image.height;
+    state.platform.img = (unsigned char*) platform.pixel_data;
+    state.platform.width = platform.width;
+    state.platform.height = platform.height;
 
-    state.ladder.img = (unsigned char*) coin_image.pixel_data;
-    state.ladder.width = coin_image.width;
-    state.ladder.height = coin_image.height;
+    state.ladder.img = (unsigned char*) ladder.pixel_data;
+    state.ladder.width = ladder.width;
+    state.ladder.height = ladder.height;
 
     // DK data...
 
