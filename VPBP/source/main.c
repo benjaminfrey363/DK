@@ -21,6 +21,13 @@
 #include "mario_right1.h"
 #include "mario_right2.h"
 
+#include "bird_left1.h"
+#include "bird_left2.h"
+#include "bird_left3.h"
+#include "bird_right1.h"
+#include "bird_right2.h"
+#include "bird_right3.h"
+
 #include "bananarang.h"
 #include "bananarang2.h"
 #include "bananarang3.h"
@@ -34,9 +41,6 @@
 #include "heartpack.h"
 #include "coinpack.h"
 #include "teleporter.h"
-
-#include "ladder.h"
-#include "platform.h"
 
 #include "ladder.h"
 #include "platform.h"
@@ -1094,6 +1098,8 @@ start_menu:
     // FIRST STAGE //
     /////////////////
 
+    goto third_stage;
+
 first_stage:
 
     state.width = 25;
@@ -1866,6 +1872,8 @@ third_stage:
     for (int i = 0; i < state.num_packs; ++i) state.packs[i].trampled = 0;
     
     // No vehicles in this level...
+
+    state.num_vehicles = 0;
 
     // Exit...
     state.exit.sprite.img = (unsigned char*) ladder.pixel_data;

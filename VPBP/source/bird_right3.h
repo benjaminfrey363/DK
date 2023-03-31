@@ -6,7 +6,7 @@ static const struct
   unsigned int height;
   unsigned int bytes_per_pixel; /* 2:RGB16, 3:RGB, 4:RGBA */
   unsigned char pixel_data[32 * 32 * 4 + 1];
-} bird_3 = {
+} bird_right3 = {
     32,
     32,
     4,
