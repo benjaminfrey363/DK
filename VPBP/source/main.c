@@ -738,19 +738,38 @@ void updateDKdirection(struct gamestate *state, int flag) {
 // Updates enemy sprite to be consistent with direction being faced.
 // Flag indicates whether to use first or second sprite.
 void updateEnemyDirection(struct object *enemy, int flag) {
-    if (enemy->enemy_direction == 1) {
-        // Facing right
-        // First right sprite
-        if (flag) enemy->sprite.img = (unsigned char*) mario_right1.pixel_data;
-        // Second right sprite
-        else enemy->sprite.img = (unsigned char*) mario_right2.pixel_data;
+    if (!enemy->flying) {
+        // Non-flying enemy sprites...
+        if (enemy->enemy_direction == 1) {
+            // Facing right
+            // First right sprite
+            if (flag) enemy->sprite.img = (unsigned char*) mario_right1.pixel_data;
+            // Second right sprite
+            else enemy->sprite.img = (unsigned char*) mario_right2.pixel_data;
 
-    } else if (enemy->enemy_direction == 0) {
-        // Facing left
-        // First left sprite
-        if (flag) enemy->sprite.img = (unsigned char*) mario_left1.pixel_data;
-        // Second left sprite
-        else enemy->sprite.img = (unsigned char*) mario_left2.pixel_data;
+        } else if (enemy->enemy_direction == 0) {
+            // Facing left
+            // First left sprite
+            if (flag) enemy->sprite.img = (unsigned char*) mario_left1.pixel_data;
+            // Second left sprite
+            else enemy->sprite.img = (unsigned char*) mario_left2.pixel_data;
+        }
+    } else {
+        // Flying enemy sprites...
+        if (enemy->enemy_direction == 1) {
+            // Facing right
+            // First right sprite
+            if (flag) enemy->sprite.img = (unsigned char*) bird_right1.pixel_data;
+            // Second right sprite
+            else enemy->sprite.img = (unsigned char*) bird_right3.pixel_data;
+
+        } else if (enemy->enemy_direction == 0) {
+            // Facing left
+            // First left sprite
+            if (flag) enemy->sprite.img = (unsigned char*) bird_left1.pixel_data;
+            // Second left sprite
+            else enemy->sprite.img = (unsigned char*) bird_left2.pixel_data;
+        }
     }
 }
 
@@ -1401,10 +1420,22 @@ gameloop:
                         newx += 1;
                     }
 
-                    if (is_valid_cell(newx, oldy, &state)) {
-                        state.enemies[i].loc.x = newx;
+                    if (!state.enemies[i].flying) {
+                        // If enemy is not flying, check if new location is a valid cell.
+                        // If invalid, turn enemy around.
+                        if (is_valid_cell(newx, oldy, &state)) {
+                            state.enemies[i].loc.x = newx;
+                        } else {
+                            state.enemies[i].enemy_direction = 1 - state.enemies[i].enemy_direction;
+                        }
                     } else {
-                        state.enemies[i].enemy_direction = 1 - state.enemies[i].enemy_direction;
+                        // Otherwise, enemy is flying - turn around at the edge of screen.
+                        if (newx > -1 && newx < state.width) {
+                            // Valid move.
+                            state.enemies[i].loc.x = newx;
+                        } else {
+                            state.enemies[i].enemy_direction = 1 - state.enemies[i].enemy_direction;
+                        }
                     }
 
                     // Draw enemy at new location and erase at old location.
@@ -1761,9 +1792,9 @@ third_stage:
 
     // Enemies
 
-    state.num_enemies = 6;
+    state.num_enemies = 8;
 
-    for (int i = 0; i < 6; ++i)
+    for (int i = 0; i < 8; ++i)
     {
         state.enemies[i].sprite.img = (unsigned char*) enemy_image.pixel_data;
         state.enemies[i].sprite.width = enemy_image.width;
@@ -1776,23 +1807,33 @@ third_stage:
         state.enemies[i].trampled = 0;
     }
 
+    for (int i = 0; i < 6; ++i) state.enemies[i].flying = 0;
+
     state.enemies[0].loc.x = 3;
     state.enemies[0].loc.y = 22;
 
     state.enemies[1].loc.x = 5;
     state.enemies[1].loc.y = 19;
 
-    state.enemies[1].loc.x = 12;
-    state.enemies[1].loc.y = 16;
+    state.enemies[2].loc.x = 12;
+    state.enemies[2].loc.y = 16;
 
-    state.enemies[2].loc.x = 0;
-    state.enemies[2].loc.y = 0;
+    state.enemies[3].loc.x = 0;
+    state.enemies[3].loc.y = 0;
 
-    state.enemies[3].loc.x = 5;
-    state.enemies[3].loc.y = 3;
+    state.enemies[4].loc.x = 5;
+    state.enemies[4].loc.y = 3;
 
-    state.enemies[1].loc.x = 12;
-    state.enemies[1].loc.y = 6;
+    state.enemies[5].loc.x = 12;
+    state.enemies[5].loc.y = 6;
+
+// Two flying enemies...
+
+    state.enemies[6].loc.x = 4;
+    state.enemies[6].loc.y = 10;
+
+    state.enemies[6].loc.x = 22;
+    state.enemies[6].loc.y = 14;
 
     // Packs
 

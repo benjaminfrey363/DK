@@ -59,6 +59,9 @@ struct object
     int trampled;
 
     int sprite_tracker;
+
+    // Used to indicate whether an enemy is flying or not.
+    int flying;
 };
 
 // Vehicle structure - effectively teleports DK between cells.
