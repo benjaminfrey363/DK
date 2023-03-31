@@ -1098,7 +1098,7 @@ start_menu:
     // FIRST STAGE //
     /////////////////
 
-    goto third_stage;
+    //goto third_stage;
 
 first_stage:
 
