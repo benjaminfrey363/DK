@@ -243,6 +243,33 @@ int map2[625] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,
 };
 
+int map3[625] = {
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+    0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,
+    0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,
+    0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,
+    0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,
+    0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,
+};
 
 ///////////////////////
 // DRAWING FUNCTIONS //
@@ -1508,7 +1535,6 @@ second_stage:
 
     state.dk.speed = 1;
     state.dk.dk_immunity = 0;
-    state.dk.num_coins_grabbed = 0;
     state.dk.has_boomerang = 0;
     
     state.dk.trampled = 0;
@@ -1723,6 +1749,97 @@ second_stage:
     goto gameloop;
 
 third_stage:
+
+    state.dk.loc.x = 17;
+    state.dk.loc.y = 24;
+
+    state.dk.speed = 1;
+    state.dk.dk_immunity = 0;
+    state.dk.has_boomerang = 0;
+    
+    state.dk.trampled = 0;
+
+    // Enemies
+
+    state.num_enemies = 6;
+
+    for (int i = 0; i < 6; ++i)
+    {
+        state.enemies[i].sprite.img = (unsigned char*) enemy_image.pixel_data;
+        state.enemies[i].sprite.width = enemy_image.width;
+        state.enemies[i].sprite.height = enemy_image.height;
+
+        state.enemies[i].speed = 1;
+        state.enemies[i].enemy_direction = 0;
+        state.enemies[i].exists = 1;
+        
+        state.enemies[i].trampled = 0;
+    }
+
+    state.enemies[0].loc.x = 3;
+    state.enemies[0].loc.y = 22;
+
+    state.enemies[1].loc.x = 5;
+    state.enemies[1].loc.y = 19;
+
+    state.enemies[1].loc.x = 12;
+    state.enemies[1].loc.y = 16;
+
+    state.enemies[2].loc.x = 0;
+    state.enemies[2].loc.y = 0;
+
+    state.enemies[3].loc.x = 5;
+    state.enemies[3].loc.y = 3;
+
+    state.enemies[1].loc.x = 12;
+    state.enemies[1].loc.y = 6;
+
+    // Packs
+
+    state.num_packs = 1;
+
+
+    // Create boomerang pack
+    state.packs[0].sprite.img = (unsigned char*) bananarangpack.pixel_data;
+    state.packs[0].sprite.width = bananarangpack.width;
+    state.packs[0].sprite.height = bananarangpack.height;
+
+    state.packs[0].health_pack = 0;
+    state.packs[0].point_pack = 0;
+    state.packs[0].boomerang_pack = 1;
+    state.packs[0].exists = 1;
+
+    state.packs[0].loc.x = 2;
+    state.packs[0].loc.y = 22;
+
+    // Boomerang setup;
+
+    state.boomerang.sprite.img = (unsigned char*) bananarang.pixel_data;
+    state.boomerang.sprite.width = bananarang.width;
+    state.boomerang.sprite.height = bananarang.height;
+
+    state.boomerang.tiles_per_second = 20;
+    state.boomerang.exists = 0;    // Projectile not in game yet.
+    state.boomerang.direction = 1; // 1 = right, 0 = left
+    
+    for (int i = 0; i < state.num_packs; ++i) state.packs[i].trampled = 0;
+    
+    // No vehicles in this level...
+
+    // Exit...
+    state.exit.sprite.img = (unsigned char*) ladder.pixel_data;
+    state.exit.sprite.width = ladder.width;
+    state.exit.sprite.height = ladder.height;
+
+    // Exit for third stage is top of ladder leading out of screen...
+    state.exit.loc.x = 17;
+    state.exit.loc.y = 0;
+    state.exit.exists = 1;
+    state.exit.trampled = 0;
+
+    for (int i = 0; i < 25*25; ++i) state.map_tiles[i] = map3[i];
+
+    goto gameloop;
 
 fourth_stage:
 
