@@ -43,6 +43,8 @@ struct object
     int dk_immunity;
     // Counts number of point packs picked up, only used for DK.
     int num_coins_grabbed;
+    // Counts number of enemies banana'd, only used for DK.
+    int num_killed;
 
     // Pack type flags, only used for packs.
     int health_pack;
