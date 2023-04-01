@@ -1703,7 +1703,7 @@ gameloop:
 
         state.loseflag = 0;
 
-        goto start_menu;
+        goto return_to_menu;
     }
 
     // If we didn't enter that code block, first stage won! Move on to next stage, but first erase score/times/lives...
@@ -2204,5 +2204,14 @@ game_won:
     drawString(SCREENWIDTH/2 - 50, SCREENHEIGHT/2, "                            ", 0xF);
     display_score(&state);
 
-    return 1;
+// If player wins the game or loses the game, will be sent to this label.
+// Here, we wait for the player to press any button, and return to the main menu when this is done.
+return_to_menu:
+    drawString(SCREENWIDTH/2 - 100, SCREENHEIGHT/2, "Press any button...", 0xF);
+    while (1) {
+        read_SNES(buttons);
+        for (int i = 0; i < 16; ++i) {
+            if (buttons[i] == 0) goto start_menu;
+        }
+    }
 }
