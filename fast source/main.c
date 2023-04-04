@@ -42,20 +42,14 @@
 #include "coinpack.h"
 #include "teleporter.h"
 
-<<<<<<<< HEAD:build/fast source/main.c
 /*
-========
->>>>>>>> 506ed3f028e60503dade4f8018f253560320668c:source/main.c
 #include "start.h"
 #include "startSelected.h"
 #include "exit.h"
 #include "exitSelected.h"
 #include "title_screen.h"
 #include "titleDonkey.h"
-<<<<<<<< HEAD:build/fast source/main.c
 */
-========
->>>>>>>> 506ed3f028e60503dade4f8018f253560320668c:source/main.c
 
 #include "ladder.h"
 #include "platform.h"
@@ -1208,13 +1202,7 @@ int main()
     // Uncomment the below to fully clear screen...
     //all_black();
 
-<<<<<<<< HEAD:build/fast source/main.c
 // No start menu in this version.
-========
-    /////////////////////////////////
-    // START MENU - BASICALLY DONE //
-    /////////////////////////////////
->>>>>>>> 506ed3f028e60503dade4f8018f253560320668c:source/main.c
 
     struct gamestate state;
 
@@ -1698,7 +1686,7 @@ gameloop:
 
         state.loseflag = 0;
 
-        goto return_to_menu;
+        goto start_menu;
     }
 
     // If we didn't enter that code block, first stage won! Move on to next stage, but first erase score/times/lives...
@@ -2199,14 +2187,5 @@ game_won:
     drawString(SCREENWIDTH/2 - 50, SCREENHEIGHT/2, "                            ", 0xF);
     display_score(&state);
 
-// If player wins the game or loses the game, will be sent to this label.
-// Here, we wait for the player to press any button, and return to the main menu when this is done.
-return_to_menu:
-    drawString(SCREENWIDTH/2 - 100, SCREENHEIGHT/2, "Press any button...", 0xF);
-    while (1) {
-        read_SNES(buttons);
-        for (int i = 0; i < 16; ++i) {
-            if (buttons[i] == 0) goto start_menu;
-        }
-    }
+    return 1;
 }
