@@ -1,4 +1,4 @@
-CPSC 359 Assignment 4 - Donkey Kong Game
+CPSC 359 Assignment 4 - Donkey Kong Game to be loaded and played on a Raspberry Pi
 
 Written by Ben Frey and Adam Mogensen
 
